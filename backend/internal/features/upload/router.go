@@ -21,6 +21,6 @@ func (rtr *Router) Register(reg *gin.RouterGroup) {
 	handler := NewHandler(service)
 
 	reg.POST("", handler.Upload)
-	reg.GET("/:key", handler.GetURL)
-	reg.DELETE("/:key", handler.DeleteFile)
+	reg.GET("/*key", handler.GetURL)
+	reg.DELETE("/*key", handler.DeleteFile)
 }

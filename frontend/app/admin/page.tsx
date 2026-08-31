@@ -4,15 +4,22 @@ import { APIENDPOINT } from "@/config/Backend";
 import { useApiCall } from "@/hooks/useApiCall";
 import {
     CalendarClock,
-    FileText,
     ImagePlus,
     Plus,
     Trash2,
+    Upload,
     Users,
     X,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
-import type { ComponentType, SVGProps } from "react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type ChangeEvent,
+    type DragEvent,
+    type ReactNode,
+} from "react";
 
 interface SpeakerForm {
     name: string;
@@ -26,6 +33,10 @@ interface ScheduleForm {
     title: string;
     startTime: string;
     endTime: string;
+}
+
+interface UploadResponse {
+    key?: string;
 }
 
 const emptySpeaker = (): SpeakerForm => ({
@@ -50,97 +61,92 @@ const slugify = (value: string) =>
         .replace(/\s+/g, "-")
         .replace(/-+/g, "-");
 
-const DUMMY_UPLOAD_ENDPOINT = `${APIENDPOINT.CreateEvent.replace(
-    "/events",
-    "/uploads",
-)}`;
-
-function SectionCard({
-    icon: Icon,
-    title,
-    description,
-    children,
-}: {
-    icon: ComponentType<SVGProps<SVGSVGElement>>;
-    title: string;
-    description?: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="rounded-2xl border border-border bg-[var(--bg-surface)] p-8 shadow-[var(--card-shadow)]">
-            <div className="mb-6 flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent-light)] text-[var(--color-accent)]">
-                    <Icon className="h-[18px] w-[18px]" />
-                </div>
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">{title}</h2>
-                    {description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground">
-                            {description}
-                        </p>
-                    )}
-                </div>
-            </div>
-            {children}
-        </div>
-    );
-}
-
-function Field({
+function FormField({
     label,
     htmlFor,
-    children,
     required,
+    children,
 }: {
     label: string;
     htmlFor?: string;
-    children: React.ReactNode;
     required?: boolean;
+    children: ReactNode;
 }) {
     return (
-        <div className="flex flex-col gap-1.5">
-            <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
+        <div className="flex flex-col gap-2">
+            <label
+                htmlFor={htmlFor}
+                className="text-sm font-medium text-text-secondary"
+            >
                 {label}
-                {required && <span className="ml-0.5 text-destructive">*</span>}
+                {required && (
+                    <span className="ml-1 text-color-accent">*</span>
+                )}
             </label>
             {children}
         </div>
     );
 }
 
-function IndexBadge({ index }: { index: number }) {
+function SectionTitle({
+    icon: Icon,
+    title,
+    description,
+}: {
+    icon: typeof Users;
+    title: string;
+    description?: string;
+}) {
     return (
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent-light)] text-xs font-semibold text-[var(--color-accent)]">
-            {index + 1}
-        </span>
+        <div className="mb-7">
+            <div className="flex items-center gap-3">
+                <Icon className="h-5 w-5 text-color-accent" />
+
+                <h2 className="text-xl font-medium tracking-tight text-text-primary">
+                    {title}
+                </h2>
+            </div>
+
+            {description && (
+                <p className="mt-2 text-sm text-text-muted">
+                    {description}
+                </p>
+            )}
+        </div>
     );
 }
 
-function IconButton({
-    onClick,
+function RemoveButton({
     label,
+    onClick,
 }: {
-    onClick: () => void;
     label: string;
+    onClick: () => void;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
             aria-label={label}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-[var(--danger-bg)] hover:text-[var(--danger-text)]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger-bg hover:text-danger-text"
         >
             <Trash2 className="h-4 w-4" />
         </button>
     );
 }
 
-function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
+function AddButton({
+    label,
+    onClick,
+}: {
+    label: string;
+    onClick: () => void;
+}) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            className="inline-flex items-center gap-2 py-2 text-sm font-medium text-text-link transition-colors hover:text-text-link-hover"
         >
             <Plus className="h-4 w-4" />
             {label}
@@ -148,91 +154,131 @@ function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
     );
 }
 
-function ImageUploadWidget({
+function ImageUpload({
     label,
     file,
     preview,
     onSelect,
     onClear,
-    aspect = "aspect-video",
+    variant = "wide",
 }: {
     label: string;
     file: File | null;
     preview: string | null;
     onSelect: (file: File) => void;
     onClear: () => void;
-    aspect?: string;
+    variant?: "wide" | "square" | "poster";
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
-    const [isDragging, setIsDragging] = useState(false);
+    const [dragging, setDragging] = useState(false);
+
+    const dimensions = {
+        wide: "aspect-[16/7]",
+        square: "aspect-square",
+        poster: "aspect-[3/4]",
+    };
 
     const handleFiles = (files: FileList | null) => {
-        const selected = files?.[0];
-        if (selected && selected.type.startsWith("image/")) {
-            onSelect(selected);
+        const selectedFile = files?.[0];
+
+        if (!selectedFile) {
+            return;
         }
+
+        if (!selectedFile.type.startsWith("image/")) {
+            return;
+        }
+
+        if (selectedFile.size > 5 * 1024 * 1024) {
+            return;
+        }
+
+        onSelect(selectedFile);
+    };
+
+    const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setDragging(false);
+        handleFiles(event.dataTransfer.files);
+    };
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+        handleFiles(event.target.files);
+        event.target.value = "";
     };
 
     return (
-        <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-foreground">{label}</span>
+        <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-text-secondary">
+                {label}
+            </span>
+
             <div
+                role="button"
+                tabIndex={0}
                 onClick={() => inputRef.current?.click()}
-                onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        inputRef.current?.click();
+                    }
                 }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    handleFiles(e.dataTransfer.files);
+                onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragging(true);
                 }}
-                className={`relative flex ${aspect} w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border transition-colors ${isDragging
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
-                    : "border-border bg-[var(--bg-surface-sunken)] hover:border-[var(--border-strong)]"
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+                className={`relative flex ${dimensions[variant]} cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-border-default bg-bg-surface transition-colors ${dragging
+                        ? "ring-2 ring-color-accent ring-offset-2"
+                        : "hover:bg-color-accent-light"
                     }`}
             >
                 {preview ? (
                     <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={preview}
                             alt={label}
                             className="h-full w-full object-cover"
                         />
+
                         <button
                             type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
+                            onClick={(event) => {
+                                event.stopPropagation();
                                 onClear();
                             }}
-                            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
+                            aria-label={`Remove ${label}`}
+                            className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
                         >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-4 w-4" />
                         </button>
                     </>
                 ) : (
-                    <div className="flex flex-col items-center gap-2 px-4 text-center">
-                        <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm font-medium text-muted-foreground">
-                            Click or drop an image
+                    <div className="flex flex-col items-center gap-2 px-5 text-center">
+                        <ImagePlus className="h-5 w-5 text-color-accent" />
+
+                        <span className="text-sm font-medium text-text-secondary">
+                            Add image
                         </span>
-                        <span className="text-xs text-muted-foreground/70">
-                            PNG, JPG up to 5MB
+
+                        <span className="text-xs text-text-muted">
+                            PNG or JPG, maximum 5MB
                         </span>
                     </div>
                 )}
             </div>
+
             <input
                 ref={inputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleFiles(e.target.files)}
+                onChange={handleChange}
             />
+
             {file && (
-                <span className="truncate text-xs text-muted-foreground">
+                <span className="truncate text-xs text-text-muted">
                     {file.name}
                 </span>
             )}
@@ -250,34 +296,126 @@ export default function CreateEvent() {
 
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+
     const [posterFile, setPosterFile] = useState<File | null>(null);
     const [posterPreview, setPosterPreview] = useState<string | null>(null);
 
-    const [speakers, setSpeakers] = useState<SpeakerForm[]>([emptySpeaker()]);
+    const [speakers, setSpeakers] = useState<SpeakerForm[]>([
+        emptySpeaker(),
+    ]);
+
     const [schedules, setSchedules] = useState<ScheduleForm[]>([
         emptySchedule(),
     ]);
 
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    useEffect(() => {
+        return () => {
+            if (bannerPreview) {
+                URL.revokeObjectURL(bannerPreview);
+            }
+
+            if (posterPreview) {
+                URL.revokeObjectURL(posterPreview);
+            }
+
+            speakers.forEach((speaker) => {
+                if (speaker.imagePreview) {
+                    URL.revokeObjectURL(speaker.imagePreview);
+                }
+            });
+        };
+    }, [bannerPreview, posterPreview, speakers]);
+
+    const createPreview = (
+        file: File,
+        previousPreview: string | null,
+    ) => {
+        if (previousPreview) {
+            URL.revokeObjectURL(previousPreview);
+        }
+
+        return URL.createObjectURL(file);
+    };
 
     const handleNameChange = (value: string) => {
         setEventName(value);
-        if (!slugTouched) setEventSlug(slugify(value));
+
+        if (!slugTouched) {
+            setEventSlug(slugify(value));
+        }
     };
 
-    const updateSpeaker = (index: number, patch: Partial<SpeakerForm>) => {
-        setSpeakers((prev) =>
-            prev.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+    const updateSpeaker = (
+        index: number,
+        patch: Partial<SpeakerForm>,
+    ) => {
+        setSpeakers((currentSpeakers) =>
+            currentSpeakers.map((speaker, speakerIndex) =>
+                speakerIndex === index
+                    ? { ...speaker, ...patch }
+                    : speaker,
+            ),
         );
     };
 
-    const updateSchedule = (index: number, patch: Partial<ScheduleForm>) => {
-        setSchedules((prev) =>
-            prev.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+    const updateSchedule = (
+        index: number,
+        patch: Partial<ScheduleForm>,
+    ) => {
+        setSchedules((currentSchedules) =>
+            currentSchedules.map((schedule, scheduleIndex) =>
+                scheduleIndex === index
+                    ? { ...schedule, ...patch }
+                    : schedule,
+            ),
         );
     };
 
+    const addSpeaker = () => {
+        setSpeakers((currentSpeakers) => [
+            ...currentSpeakers,
+            emptySpeaker(),
+        ]);
+    };
+
+    const removeSpeaker = (index: number) => {
+        setSpeakers((currentSpeakers) => {
+            const speaker = currentSpeakers[index];
+
+            if (speaker?.imagePreview) {
+                URL.revokeObjectURL(speaker.imagePreview);
+            }
+
+            return currentSpeakers.filter(
+                (_, speakerIndex) => speakerIndex !== index,
+            );
+        });
+    };
+
+    const addSchedule = () => {
+        setSchedules((currentSchedules) => [
+            ...currentSchedules,
+            emptySchedule(),
+        ]);
+    };
+
+    const removeSchedule = (index: number) => {
+        setSchedules((currentSchedules) =>
+            currentSchedules.filter(
+                (_, scheduleIndex) => scheduleIndex !== index,
+            ),
+        );
+    };
+
+    /**
+     * Upload an image and return only its permanent storage key.
+     *
+     * Do not save the signed URL because it expires.
+     */
     const uploadImage = useCallback(
         async (file: File): Promise<string | null> => {
             const formData = new FormData();
@@ -285,364 +423,651 @@ export default function CreateEvent() {
 
             const result = await makeApiCall(
                 "POST",
-                DUMMY_UPLOAD_ENDPOINT,
+                APIENDPOINT.UploadFile,
                 formData,
             );
 
-            if (result.success) {
-                const uploaded = result.data as { url?: string } | null;
-                return uploaded?.url ?? null;
+            if (!result.success) {
+                return null;
             }
-            return null;
+
+            const uploaded = result.data as UploadResponse | null;
+
+            return uploaded?.key ?? null;
         },
         [makeApiCall],
     );
 
-    const addSpeaker = () => setSpeakers((prev) => [...prev, emptySpeaker()]);
-    const removeSpeaker = (index: number) =>
-        setSpeakers((prev) => prev.filter((_, i) => i !== index));
-
-    const addSchedule = () => setSchedules((prev) => [...prev, emptySchedule()]);
-    const removeSchedule = (index: number) =>
-        setSchedules((prev) => prev.filter((_, i) => i !== index));
-
     const resetForm = () => {
+        if (bannerPreview) {
+            URL.revokeObjectURL(bannerPreview);
+        }
+
+        if (posterPreview) {
+            URL.revokeObjectURL(posterPreview);
+        }
+
+        speakers.forEach((speaker) => {
+            if (speaker.imagePreview) {
+                URL.revokeObjectURL(speaker.imagePreview);
+            }
+        });
+
         setEventName("");
         setEventSlug("");
         setSlugTouched(false);
         setDescription("");
+
         setBannerFile(null);
         setBannerPreview(null);
+
         setPosterFile(null);
         setPosterPreview(null);
+
         setSpeakers([emptySpeaker()]);
         setSchedules([emptySchedule()]);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (
+        event: React.FormEvent<HTMLFormElement>,
+    ) => {
+        event.preventDefault();
+
         setError(null);
         setSuccessMessage(null);
 
         if (!eventName.trim() || !eventSlug.trim()) {
-            setError("Event name and slug are required.");
+            setError("Event name and event slug are required.");
             return;
         }
 
-        const [bannerUrl, posterUrl] = await Promise.all([
-            bannerFile ? uploadImage(bannerFile) : Promise.resolve(null),
-            posterFile ? uploadImage(posterFile) : Promise.resolve(null),
-        ]);
+        setIsUploading(true);
 
-        const eventResult = await makeApiCall("POST", APIENDPOINT.CreateEvent, {
-            event_name: eventName.trim(),
-            event_slug: eventSlug.trim(),
-            description: description.trim(),
-            banner_image: bannerUrl ?? "",
-            poster_image: posterUrl ?? "",
-        });
+        try {
+            const [bannerKey, posterKey] = await Promise.all([
+                bannerFile
+                    ? uploadImage(bannerFile)
+                    : Promise.resolve(null),
+                posterFile
+                    ? uploadImage(posterFile)
+                    : Promise.resolve(null),
+            ]);
 
-        if (!eventResult.success) {
-            setError(eventResult.message ?? "Failed to create event.");
-            return;
-        }
+            if (bannerFile && !bannerKey) {
+                setError("Unable to upload the banner image.");
+                return;
+            }
 
-        const createdEvent = eventResult.data as { id?: string } | null;
-        const eventId = createdEvent?.id;
+            if (posterFile && !posterKey) {
+                setError("Unable to upload the poster image.");
+                return;
+            }
 
-        if (!eventId) {
-            setError("Event created, but no event ID was returned by the server.");
-            return;
-        }
+            const eventResult = await makeApiCall(
+                "POST",
+                APIENDPOINT.CreateEvent,
+                {
+                    event_name: eventName.trim(),
+                    event_slug: eventSlug.trim(),
+                    description: description.trim(),
 
-        const speakerCalls = speakers
-            .filter((s) => s.name.trim())
-            .map(async (speaker) => {
-                const imageUrl = speaker.imageFile
-                    ? await uploadImage(speaker.imageFile)
-                    : null;
+                    // Save permanent storage keys, not signed URLs.
+                    banner_image: bannerKey ?? "",
+                    poster_image: posterKey ?? "",
+                },
+            );
 
-                return makeApiCall("POST", APIENDPOINT.CreateSpeaker, {
-                    event_id: eventId,
-                    name: speaker.name.trim(),
-                    designation: speaker.designation.trim(),
-                    company: speaker.company.trim(),
-                    image: imageUrl ?? "",
+            if (!eventResult.success) {
+                setError(
+                    eventResult.message ??
+                    "Unable to create the event.",
+                );
+                return;
+            }
+
+            const createdEvent = eventResult.data as {
+                id?: string;
+            } | null;
+
+            const eventId = createdEvent?.id;
+
+            if (!eventId) {
+                setError(
+                    "The event was created but no event ID was returned.",
+                );
+                return;
+            }
+
+            const speakerRequests = speakers
+                .filter((speaker) => speaker.name.trim())
+                .map(async (speaker) => {
+                    const imageKey = speaker.imageFile
+                        ? await uploadImage(speaker.imageFile)
+                        : null;
+
+                    if (speaker.imageFile && !imageKey) {
+                        return {
+                            success: false,
+                            message: `Unable to upload the image for ${speaker.name}.`,
+                        };
+                    }
+
+                    return makeApiCall(
+                        "POST",
+                        APIENDPOINT.CreateSpeaker,
+                        {
+                            event_id: eventId,
+                            name: speaker.name.trim(),
+                            designation: speaker.designation.trim(),
+                            company: speaker.company.trim(),
+
+                            // Save the permanent key.
+                            image: imageKey ?? "",
+                        },
+                    );
                 });
-            });
 
-        const scheduleCalls = schedules
-            .filter((s) => s.title.trim())
-            .map((schedule) =>
-                makeApiCall("POST", APIENDPOINT.CreateSchedule, {
-                    event_id: eventId,
-                    title: schedule.title.trim(),
-                    start_time: schedule.startTime,
-                    end_time: schedule.endTime,
-                }),
+            const scheduleRequests = schedules
+                .filter((schedule) => schedule.title.trim())
+                .map((schedule) =>
+                    makeApiCall(
+                        "POST",
+                        APIENDPOINT.CreateSchedule,
+                        {
+                            event_id: eventId,
+                            title: schedule.title.trim(),
+                            start_time: schedule.startTime,
+                            end_time: schedule.endTime,
+                        },
+                    ),
+                );
+
+            const results = await Promise.all([
+                ...speakerRequests,
+                ...scheduleRequests,
+            ]);
+
+            const failedRequests = results.filter(
+                (result) => !result.success,
             );
 
-        const results = await Promise.all([...speakerCalls, ...scheduleCalls]);
-        const failed = results.filter((r) => !r.success);
+            if (failedRequests.length > 0) {
+                setError(
+                    `Event created, but ${failedRequests.length} related item(s) could not be saved.`,
+                );
+                return;
+            }
 
-        if (failed.length > 0) {
+            setSuccessMessage("Event created successfully.");
+            resetForm();
+        } catch {
             setError(
-                `Event created, but ${failed.length} related item(s) failed to save.`,
+                "Something went wrong while creating the event.",
             );
-            return;
+        } finally {
+            setIsUploading(false);
         }
-
-        setSuccessMessage("Event created successfully.");
-        resetForm();
     };
 
+    const submitting = isLoading || isUploading;
+
     return (
-        <section className="flex flex-col gap-8 px-6 py-12 font-sans">
-            <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]">
-                    New event
-                </span>
-                <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-                    Create event
-                </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
-                    Fill in the event details, add speakers and a schedule, then
-                    publish.
-                </p>
-            </div>
+        <main className="min-h-screen bg-bg-page px-4 py-8 font-sans text-text-primary sm:px-6 sm:py-12">
+            <div className="mx-auto max-w-3xl">
+                <div className="mb-8 overflow-hidden rounded-xl border border-card-border bg-bg-surface-raised shadow-sm">
+                    <div className="h-2 bg-color-accent" />
 
-            {error && (
-                <div className="rounded-xl border border-[var(--danger-border)] bg-[var(--danger-bg)] px-4 py-3 text-sm text-[var(--danger-text)]">
-                    {error}
+                    <div className="px-6 py-7 sm:px-9">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-color-accent">
+                            Event management
+                        </p>
+
+                        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">
+                            Create event
+                        </h1>
+
+                        <p className="mt-3 max-w-xl text-sm leading-6 text-text-muted">
+                            Add the event information, speakers, images,
+                            and agenda.
+                        </p>
+
+                        <div className="mt-6 h-px bg-border-default" />
+
+                        <p className="mt-4 text-xs text-text-muted">
+                            <span className="text-color-accent">*</span>{" "}
+                            Required field
+                        </p>
+                    </div>
                 </div>
-            )}
-            {successMessage && (
-                <div className="rounded-xl border border-[var(--success-border)] bg-[var(--success-bg)] px-4 py-3 text-sm text-[var(--success-text)]">
-                    {successMessage}
-                </div>
-            )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                <SectionCard icon={FileText} title="Event details">
-                    <div className="">
-                        <Field label="Event name" htmlFor="event-name" required>
-                            <input
-                                id="event-name"
-                                className="input w-full"
-                                value={eventName}
-                                onChange={(e) => handleNameChange(e.target.value)}
-                                placeholder="Annual Tech Summit"
-                                required
-                            />
-                        </Field>
-                    </div>
-
-                    <div className="mt-4">
-                        <Field label="Description" htmlFor="event-description">
-                            <textarea
-                                id="event-description"
-                                className="input min-h-[100px] w-full resize-y"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="What is this event about?"
-                            />
-                        </Field>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <ImageUploadWidget
-                            label="Banner image"
-                            file={bannerFile}
-                            preview={bannerPreview}
-                            onSelect={(file) => {
-                                setBannerFile(file);
-                                setBannerPreview(URL.createObjectURL(file));
-                            }}
-                            onClear={() => {
-                                setBannerFile(null);
-                                setBannerPreview(null);
-                            }}
-                        />
-                        <ImageUploadWidget
-                            label="Poster image"
-                            file={posterFile}
-                            preview={posterPreview}
-                            onSelect={(file) => {
-                                setPosterFile(file);
-                                setPosterPreview(URL.createObjectURL(file));
-                            }}
-                            onClear={() => {
-                                setPosterFile(null);
-                                setPosterPreview(null);
-                            }}
-                            aspect="aspect-[3/4]"
-                        />
-                    </div>
-                </SectionCard>
-
-                <SectionCard
-                    icon={Users}
-                    title="Speakers"
-                    description="Add the people speaking at this event."
-                >
-                    <div className="flex flex-col gap-4">
-                        {speakers.map((speaker, index) => (
-                            <div
-                                key={index}
-                                className="rounded-xl border border-border bg-[var(--bg-surface-sunken)] p-4"
-                            >
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <IndexBadge index={index} />
-                                        <span className="text-sm font-medium text-muted-foreground">
-                                            Speaker
-                                        </span>
-                                    </div>
-                                    {speakers.length > 1 && (
-                                        <IconButton
-                                            onClick={() => removeSpeaker(index)}
-                                            label="Remove speaker"
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
-                                    <ImageUploadWidget
-                                        label="Photo"
-                                        file={speaker.imageFile}
-                                        preview={speaker.imagePreview}
-                                        onSelect={(file) =>
-                                            updateSpeaker(index, {
-                                                imageFile: file,
-                                                imagePreview: URL.createObjectURL(file),
-                                            })
-                                        }
-                                        onClear={() =>
-                                            updateSpeaker(index, {
-                                                imageFile: null,
-                                                imagePreview: null,
-                                            })
-                                        }
-                                        aspect="aspect-square"
-                                    />
-
-                                    <div className="flex flex-col gap-3">
-                                        <Field label="Name">
-                                            <input
-                                                className="input w-full"
-                                                value={speaker.name}
-                                                onChange={(e) =>
-                                                    updateSpeaker(index, { name: e.target.value })
-                                                }
-                                                placeholder="Jane Doe"
-                                            />
-                                        </Field>
-                                        <Field label="Designation">
-                                            <input
-                                                className="input w-full"
-                                                value={speaker.designation}
-                                                onChange={(e) =>
-                                                    updateSpeaker(index, {
-                                                        designation: e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Engineering Lead"
-                                            />
-                                        </Field>
-                                        <Field label="Company">
-                                            <input
-                                                className="input w-full"
-                                                value={speaker.company}
-                                                onChange={(e) =>
-                                                    updateSpeaker(index, { company: e.target.value })
-                                                }
-                                                placeholder="Acme Inc."
-                                            />
-                                        </Field>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        <AddButton onClick={addSpeaker} label="Add speaker" />
-                    </div>
-                </SectionCard>
-
-                <SectionCard
-                    icon={CalendarClock}
-                    title="Schedule"
-                    description="Lay out the agenda for the event."
-                >
-                    <div className="flex flex-col gap-4">
-                        {schedules.map((schedule, index) => (
-                            <div
-                                key={index}
-                                className="rounded-xl border border-border bg-[var(--bg-surface-sunken)] p-4"
-                            >
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <IndexBadge index={index} />
-                                        <span className="text-sm font-medium text-muted-foreground">
-                                            Session
-                                        </span>
-                                    </div>
-                                    {schedules.length > 1 && (
-                                        <IconButton
-                                            onClick={() => removeSchedule(index)}
-                                            label="Remove session"
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr]">
-                                    <Field label="Title">
-                                        <input
-                                            className="input w-full"
-                                            value={schedule.title}
-                                            onChange={(e) =>
-                                                updateSchedule(index, { title: e.target.value })
-                                            }
-                                            placeholder="Opening keynote"
-                                        />
-                                    </Field>
-                                    <Field label="Start time">
-                                        <input
-                                            type="time"
-                                            className="input w-full"
-                                            value={schedule.startTime}
-                                            onChange={(e) =>
-                                                updateSchedule(index, { startTime: e.target.value })
-                                            }
-                                        />
-                                    </Field>
-                                    <Field label="End time">
-                                        <input
-                                            type="time"
-                                            className="input w-full"
-                                            value={schedule.endTime}
-                                            onChange={(e) =>
-                                                updateSchedule(index, { endTime: e.target.value })
-                                            }
-                                        />
-                                    </Field>
-                                </div>
-                            </div>
-                        ))}
-
-                        <AddButton onClick={addSchedule} label="Add schedule item" />
-                    </div>
-                </SectionCard>
-
-                <div className="sticky bottom-0 -mx-6 flex items-center justify-end border-t border-border bg-background/80 px-6 py-4 backdrop-blur">
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="btn btn-primary px-6 py-2.5"
+                {error && (
+                    <div
+                        role="alert"
+                        className="mb-6 rounded-lg border border-danger-border bg-danger-bg px-5 py-4 text-sm text-danger-text"
                     >
-                        {isLoading ? "Creating..." : "Create event"}
-                    </button>
-                </div>
-            </form>
-        </section>
+                        {error}
+                    </div>
+                )}
+
+                {successMessage && (
+                    <div
+                        role="status"
+                        className="mb-6 rounded-lg border border-success-border bg-success-bg px-5 py-4 text-sm text-success-text"
+                    >
+                        {successMessage}
+                    </div>
+                )}
+
+                <form
+                    onSubmit={handleSubmit}
+                    className="overflow-hidden rounded-xl border border-card-border bg-bg-surface-raised shadow-sm"
+                >
+                    <section className="px-6 py-8 sm:px-9">
+                        <SectionTitle
+                            icon={Upload}
+                            title="Event details"
+                            description="Provide the core information for this event."
+                        />
+
+                        <div className="flex flex-col gap-7">
+                            <FormField
+                                label="Event name"
+                                htmlFor="event-name"
+                                required
+                            >
+                                <input
+                                    id="event-name"
+                                    type="text"
+                                    value={eventName}
+                                    onChange={(event) =>
+                                        handleNameChange(
+                                            event.target.value,
+                                        )
+                                    }
+                                    placeholder="Annual Tech Summit"
+                                    required
+                                    className="input w-full"
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Event slug"
+                                htmlFor="event-slug"
+                                required
+                            >
+                                <input
+                                    id="event-slug"
+                                    type="text"
+                                    value={eventSlug}
+                                    onChange={(event) => {
+                                        setSlugTouched(true);
+                                        setEventSlug(
+                                            event.target.value,
+                                        );
+                                    }}
+                                    placeholder="annual-tech-summit"
+                                    required
+                                    className="input w-full"
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Description"
+                                htmlFor="event-description"
+                            >
+                                <textarea
+                                    id="event-description"
+                                    value={description}
+                                    onChange={(event) =>
+                                        setDescription(
+                                            event.target.value,
+                                        )
+                                    }
+                                    placeholder="What is this event about?"
+                                    rows={4}
+                                    className="input w-full resize-y"
+                                />
+                            </FormField>
+
+                            <div className="grid gap-7 sm:grid-cols-[2fr_1fr]">
+                                <ImageUpload
+                                    label="Banner image"
+                                    file={bannerFile}
+                                    preview={bannerPreview}
+                                    onSelect={(file) => {
+                                        setBannerFile(file);
+                                        setBannerPreview(
+                                            createPreview(
+                                                file,
+                                                bannerPreview,
+                                            ),
+                                        );
+                                    }}
+                                    onClear={() => {
+                                        if (bannerPreview) {
+                                            URL.revokeObjectURL(
+                                                bannerPreview,
+                                            );
+                                        }
+
+                                        setBannerFile(null);
+                                        setBannerPreview(null);
+                                    }}
+                                />
+
+                                <ImageUpload
+                                    label="Poster image"
+                                    file={posterFile}
+                                    preview={posterPreview}
+                                    variant="poster"
+                                    onSelect={(file) => {
+                                        setPosterFile(file);
+                                        setPosterPreview(
+                                            createPreview(
+                                                file,
+                                                posterPreview,
+                                            ),
+                                        );
+                                    }}
+                                    onClear={() => {
+                                        if (posterPreview) {
+                                            URL.revokeObjectURL(
+                                                posterPreview,
+                                            );
+                                        }
+
+                                        setPosterFile(null);
+                                        setPosterPreview(null);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    <div className="mx-6 h-px bg-border-default sm:mx-9" />
+
+                    <section className="px-6 py-8 sm:px-9">
+                        <SectionTitle
+                            icon={Users}
+                            title="Speakers"
+                            description="Add people who will speak at the event."
+                        />
+
+                        <div className="flex flex-col">
+                            {speakers.map((speaker, index) => (
+                                <div
+                                    key={index}
+                                    className="border-b border-border-default py-7 first:pt-0 last:border-b-0"
+                                >
+                                    <div className="mb-6 flex items-center justify-between">
+                                        <p className="text-sm font-medium text-text-muted">
+                                            Speaker {index + 1}
+                                        </p>
+
+                                        {speakers.length > 1 && (
+                                            <RemoveButton
+                                                label={`Remove speaker ${index + 1}`}
+                                                onClick={() =>
+                                                    removeSpeaker(index)
+                                                }
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="grid gap-7 sm:grid-cols-[150px_1fr]">
+                                        <ImageUpload
+                                            label="Photo"
+                                            file={speaker.imageFile}
+                                            preview={
+                                                speaker.imagePreview
+                                            }
+                                            variant="square"
+                                            onSelect={(file) => {
+                                                updateSpeaker(index, {
+                                                    imageFile: file,
+                                                    imagePreview:
+                                                        createPreview(
+                                                            file,
+                                                            speaker.imagePreview,
+                                                        ),
+                                                });
+                                            }}
+                                            onClear={() => {
+                                                if (
+                                                    speaker.imagePreview
+                                                ) {
+                                                    URL.revokeObjectURL(
+                                                        speaker.imagePreview,
+                                                    );
+                                                }
+
+                                                updateSpeaker(index, {
+                                                    imageFile: null,
+                                                    imagePreview: null,
+                                                });
+                                            }}
+                                        />
+
+                                        <div className="flex flex-col gap-6">
+                                            <FormField
+                                                label="Name"
+                                                htmlFor={`speaker-name-${index}`}
+                                            >
+                                                <input
+                                                    id={`speaker-name-${index}`}
+                                                    type="text"
+                                                    value={speaker.name}
+                                                    onChange={(event) =>
+                                                        updateSpeaker(
+                                                            index,
+                                                            {
+                                                                name: event
+                                                                    .target
+                                                                    .value,
+                                                            },
+                                                        )
+                                                    }
+                                                    placeholder="Jane Doe"
+                                                    className="input w-full"
+                                                />
+                                            </FormField>
+
+                                            <FormField
+                                                label="Designation"
+                                                htmlFor={`speaker-designation-${index}`}
+                                            >
+                                                <input
+                                                    id={`speaker-designation-${index}`}
+                                                    type="text"
+                                                    value={
+                                                        speaker.designation
+                                                    }
+                                                    onChange={(event) =>
+                                                        updateSpeaker(
+                                                            index,
+                                                            {
+                                                                designation:
+                                                                    event
+                                                                        .target
+                                                                        .value,
+                                                            },
+                                                        )
+                                                    }
+                                                    placeholder="Engineering Lead"
+                                                    className="input w-full"
+                                                />
+                                            </FormField>
+
+                                            <FormField
+                                                label="Company"
+                                                htmlFor={`speaker-company-${index}`}
+                                            >
+                                                <input
+                                                    id={`speaker-company-${index}`}
+                                                    type="text"
+                                                    value={speaker.company}
+                                                    onChange={(event) =>
+                                                        updateSpeaker(
+                                                            index,
+                                                            {
+                                                                company:
+                                                                    event
+                                                                        .target
+                                                                        .value,
+                                                            },
+                                                        )
+                                                    }
+                                                    placeholder="Acme Inc."
+                                                    className="input w-full"
+                                                />
+                                            </FormField>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-3">
+                            <AddButton
+                                label="Add speaker"
+                                onClick={addSpeaker}
+                            />
+                        </div>
+                    </section>
+
+                    <div className="mx-6 h-px bg-border-default sm:mx-9" />
+
+                    <section className="px-6 py-8 sm:px-9">
+                        <SectionTitle
+                            icon={CalendarClock}
+                            title="Schedule"
+                            description="Create the agenda for your event."
+                        />
+
+                        <div className="flex flex-col">
+                            {schedules.map((schedule, index) => (
+                                <div
+                                    key={index}
+                                    className="border-b border-border-default py-7 first:pt-0 last:border-b-0"
+                                >
+                                    <div className="mb-6 flex items-center justify-between">
+                                        <p className="text-sm font-medium text-text-muted">
+                                            Schedule item {index + 1}
+                                        </p>
+
+                                        {schedules.length > 1 && (
+                                            <RemoveButton
+                                                label={`Remove schedule item ${index + 1}`}
+                                                onClick={() =>
+                                                    removeSchedule(index)
+                                                }
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="grid gap-6 sm:grid-cols-[2fr_1fr_1fr]">
+                                        <FormField
+                                            label="Title"
+                                            htmlFor={`schedule-title-${index}`}
+                                        >
+                                            <input
+                                                id={`schedule-title-${index}`}
+                                                type="text"
+                                                value={schedule.title}
+                                                onChange={(event) =>
+                                                    updateSchedule(
+                                                        index,
+                                                        {
+                                                            title: event
+                                                                .target
+                                                                .value,
+                                                        },
+                                                    )
+                                                }
+                                                placeholder="Opening keynote"
+                                                className="input w-full"
+                                            />
+                                        </FormField>
+
+                                        <FormField
+                                            label="Start time"
+                                            htmlFor={`schedule-start-${index}`}
+                                        >
+                                            <input
+                                                id={`schedule-start-${index}`}
+                                                type="time"
+                                                value={
+                                                    schedule.startTime
+                                                }
+                                                onChange={(event) =>
+                                                    updateSchedule(
+                                                        index,
+                                                        {
+                                                            startTime:
+                                                                event
+                                                                    .target
+                                                                    .value,
+                                                        },
+                                                    )
+                                                }
+                                                className="input w-full"
+                                            />
+                                        </FormField>
+
+                                        <FormField
+                                            label="End time"
+                                            htmlFor={`schedule-end-${index}`}
+                                        >
+                                            <input
+                                                id={`schedule-end-${index}`}
+                                                type="time"
+                                                value={schedule.endTime}
+                                                onChange={(event) =>
+                                                    updateSchedule(
+                                                        index,
+                                                        {
+                                                            endTime:
+                                                                event
+                                                                    .target
+                                                                    .value,
+                                                        },
+                                                    )
+                                                }
+                                                className="input w-full"
+                                            />
+                                        </FormField>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-3">
+                            <AddButton
+                                label="Add schedule item"
+                                onClick={addSchedule}
+                            />
+                        </div>
+                    </section>
+
+                    <div className="sticky bottom-0 flex items-center justify-between border-t border-border-default bg-bg-surface-raised/95 px-6 py-5 backdrop-blur sm:px-9">
+                        <span className="text-xs text-text-muted">
+                            Your event will be saved when submitted.
+                        </span>
+
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="btn btn-primary"
+                        >
+                            {submitting
+                                ? isUploading
+                                    ? "Uploading..."
+                                    : "Creating..."
+                                : "Create event"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
     );
 }

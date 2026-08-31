@@ -2,8 +2,6 @@ package events
 
 import (
 	"context"
-
-	generator "github.com/DeveloperAromal/ieeesbvast/pkg/generator"
 )
 
 type Service interface {
@@ -27,17 +25,12 @@ func NewService(repo Repository) *service {
 
 func (srv *service) CreateEvent(ctx context.Context, event Event) (Event, error) {
 
-	slug, err := generator.GenerateSlug(event.EventName)
-	if err != nil {
-		return Event{}, err
-	}
-
 	return srv.repo.CreateEvent(
 		ctx,
 		Event{
 			ID:          event.ID,
 			EventName:   event.EventName,
-			EventSlug:   slug,
+			EventSlug:   event.EventSlug,
 			PosterImage: event.PosterImage,
 			BannerImage: event.BannerImage,
 			Description: event.Description,

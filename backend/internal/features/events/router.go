@@ -29,6 +29,6 @@ func (rtr *Router) Register(reg *gin.RouterGroup) {
 	reg.POST("/speakers", handler.CreateEventSpeaker)
 	reg.POST("/schedules", handler.CreateEventSchedule)
 	reg.GET("", handler.GetAllEvents)
+	reg.GET("/name/:id", handler.GetEventNameByID)
 	reg.GET("/:slug", handler.GetEventBySlug)
-	reg.GET("/name/:id", handler.GetEventBySlug)
 }

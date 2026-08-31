@@ -39,7 +39,7 @@ func (hdlr *handler) CreateNewEvent(c *gin.Context) {
 			c.Writer,
 			false,
 			http.StatusInternalServerError,
-			"Unexpected error occured",
+			"Unexpected error occured"+err.Error(),
 		)
 		return
 	}
@@ -156,7 +156,7 @@ func (hdlr *handler) GetEventBySlug(c *gin.Context) {
 			c.Writer,
 			false,
 			http.StatusInternalServerError,
-			"Unexpected error occured",
+			"Unexpected error occured"+err.Error(),
 		)
 		return
 	}

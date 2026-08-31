@@ -39,7 +39,7 @@ func (hdlr *handler) CreateNewRegistration(c *gin.Context) {
 			c.Writer,
 			false,
 			http.StatusInternalServerError,
-			"Unexpected error occured",
+			"Unexpected error occured"+err.Error(),
 		)
 		return
 	}

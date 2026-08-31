@@ -7,4 +7,11 @@ export type ApiResponse = {
     token?: string
 }
 
-
+export interface RegistrationPayload {
+    fname: string;
+    lname: string;
+    phonenumber: string;
+    email: string;
+    collage_name: string;
+    event_id: string;
+}

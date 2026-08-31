@@ -17,7 +17,7 @@
 },
 {
 "method": "GET",
-"path": "/api/v1/upload/:key"
+"path": "/api/v1/upload/*key"
 },
 {
 "method": "GET",
@@ -45,6 +45,6 @@
 },
 {
 "method": "DELETE",
-"path": "/api/v1/upload/:key"
+"path": "/api/v1/upload/*key"
 }
 ]
