@@ -1,0 +1,50 @@
+[
+{
+"method": "GET",
+"path": "/"
+},
+{
+"method": "GET",
+"path": "/api/v1/events"
+},
+{
+"method": "GET",
+"path": "/api/v1/events/name/:id"
+},
+{
+"method": "GET",
+"path": "/api/v1/events/:slug"
+},
+{
+"method": "GET",
+"path": "/api/v1/upload/:key"
+},
+{
+"method": "GET",
+"path": "/health"
+},
+{
+"method": "POST",
+"path": "/api/v1/events"
+},
+{
+"method": "POST",
+"path": "/api/v1/events/speakers"
+},
+{
+"method": "POST",
+"path": "/api/v1/events/schedules"
+},
+{
+"method": "POST",
+"path": "/api/v1/registrations"
+},
+{
+"method": "POST",
+"path": "/api/v1/upload"
+},
+{
+"method": "DELETE",
+"path": "/api/v1/upload/:key"
+}
+]
