@@ -5,11 +5,11 @@ import { APIENDPOINT } from "@/config/Backend";
 import { useApiCall } from "@/hooks/useApiCall";
 import { ImageProxy } from "@/components/ImageProxy";
 import { Event } from "@/types/event_types";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export default function Events() {
+export default function EventsPage() {
     const { makeApiCall } = useApiCall();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -43,10 +43,8 @@ export default function Events() {
 
     if (loading) {
         return (
-            <main
-                className="flex min-h-screen items-center justify-center"
-                style={{ background: "var(--bg-page)" }}
-            >
+            <main className="min-h-screen flex items-center justify-center"
+                style={{ background: "var(--bg-page)" }}>
                 <p style={{ color: "var(--text-secondary)" }}>
                     Loading events...
                 </p>
@@ -56,33 +54,35 @@ export default function Events() {
 
     if (error) {
         return (
-            <main
-                className="flex min-h-screen items-center justify-center"
-                style={{ background: "var(--bg-page)" }}
-            >
-                <p style={{ color: "var(--text-secondary)" }}>
-                    {error}
-                </p>
+            <main className="min-h-screen flex items-center justify-center"
+                style={{ background: "var(--bg-page)" }}>
+                <div className="text-center">
+                    <p style={{ color: "var(--text-secondary)" }}>
+                        {error}
+                    </p>
+                </div>
             </main>
         );
     }
 
     return (
         <main className="min-h-screen" style={{ background: "var(--bg-page)" }}>
-            <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-                <div className="mb-10">
+            <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+                {/* Header */}
+                <div className="mb-12">
                     <h1 className="text-4xl font-bold tracking-tight"
                         style={{ color: "var(--text-primary)" }}>
                         Events
                     </h1>
-                    <p className="mt-2 text-lg"
+                    <p className="text-lg mt-3"
                         style={{ color: "var(--text-muted)" }}>
-                        Explore and register for our upcoming events
+                        Discover and register for our upcoming events
                     </p>
                 </div>
 
+                {/* Events Grid */}
                 {events.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12">
+                    <div className="flex flex-col items-center justify-center py-20">
                         <p style={{ color: "var(--text-secondary)" }}>
                             No events available at the moment
                         </p>
@@ -103,34 +103,37 @@ function EventCard({ event }: { event: Event }) {
     return (
         <Link
             href={`/events/${event.event_slug}`}
-            className="group rounded-xl overflow-hidden transition-transform hover:scale-105"
+            className="group rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105"
             style={{
                 background: "var(--bg-surface-raised)",
                 border: "1px solid var(--border-default)",
             }}
         >
-            {/* Event Poster with fresh signed URL */}
+            {/* Event Poster */}
             {event.poster_image && (
-                <div className="w-full h-48 overflow-hidden bg-cover bg-center"
+                <div className="w-full h-48 overflow-hidden bg-gray-200 relative"
                     style={{
                         backgroundColor: "var(--bg-surface)",
                     }}>
                     <ImageProxy
                         imageKey={event.poster_image}
                         alt={event.event_name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                 </div>
             )}
 
+            {/* Content */}
             <div className="p-5">
+                {/* Event Name */}
                 <h3
-                    className="text-lg font-semibold line-clamp-2"
+                    className="text-lg font-semibold line-clamp-2 group-hover:text-color-accent transition-colors"
                     style={{ color: "var(--text-primary)" }}
                 >
                     {event.event_name}
                 </h3>
 
+                {/* Description */}
                 <p
                     className="mt-2 text-sm line-clamp-2"
                     style={{ color: "var(--text-muted)" }}
@@ -138,7 +141,8 @@ function EventCard({ event }: { event: Event }) {
                     {event.description}
                 </p>
 
-                <div className="mt-4 flex items-center justify-between text-sm"
+                {/* Meta Info */}
+                <div className="mt-4 flex items-center justify-between text-xs"
                     style={{ color: "var(--text-secondary)" }}>
                     <div className="flex items-center gap-1">
                         <Calendar size={14} />
@@ -150,15 +154,17 @@ function EventCard({ event }: { event: Event }) {
                     </div>
                 </div>
 
-                <button
-                    className="mt-4 w-full py-2 rounded-lg font-medium transition-colors"
-                    style={{
-                        background: "var(--color-accent)",
-                        color: "var(--color-accent-text)",
-                    }}
-                >
-                    View Event
-                </button>
+                {/* Footer with Arrow */}
+                <div className="mt-5 flex items-center justify-between pt-4"
+                    style={{ borderTop: "1px solid var(--border-default)" }}>
+                    <span className="text-xs font-semibold"
+                        style={{ color: "var(--color-accent)" }}>
+                        View Event
+                    </span>
+                    <ArrowRight size={16}
+                        className="group-hover:translate-x-1 transition-transform"
+                        style={{ color: "var(--color-accent)" }} />
+                </div>
             </div>
         </Link>
     );
