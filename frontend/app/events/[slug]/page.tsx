@@ -78,7 +78,7 @@ export default function EventDetailPage() {
             <section className="mx-auto max-w-7xl px-6 py-6 lg:px-6">
                 <BackgroundImage
                     imageKey={event?.banner_image}
-                    className="h-80 w-full rounded-2xl"
+                    className="h-60 w-full rounded-2xl"
                     refreshInterval={55}
                 />
 
