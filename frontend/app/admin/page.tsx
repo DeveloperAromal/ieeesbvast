@@ -2,6 +2,7 @@
 
 import { APIENDPOINT } from "@/config/Backend";
 import { useApiCall } from "@/hooks/useApiCall";
+import { AdminSidebar } from "@/components/AdminSidebar";
 import {
     CalendarClock,
     ImagePlus,
@@ -31,8 +32,7 @@ interface SpeakerForm {
 
 interface ScheduleForm {
     title: string;
-    startTime: string;
-    endTime: string;
+    dateTime: string;
 }
 
 interface UploadResponse {
@@ -49,8 +49,7 @@ const emptySpeaker = (): SpeakerForm => ({
 
 const emptySchedule = (): ScheduleForm => ({
     title: "",
-    startTime: "",
-    endTime: "",
+    dateTime: "",
 });
 
 const slugify = (value: string) =>
@@ -411,11 +410,6 @@ export default function CreateEvent() {
         );
     };
 
-    /**
-     * Upload an image and return only its permanent storage key.
-     *
-     * Do not save the signed URL because it expires.
-     */
     const uploadImage = useCallback(
         async (file: File): Promise<string | null> => {
             const formData = new FormData();
@@ -511,7 +505,6 @@ export default function CreateEvent() {
                     event_slug: eventSlug.trim(),
                     description: description.trim(),
 
-                    // Save permanent storage keys, not signed URLs.
                     banner_image: bannerKey ?? "",
                     poster_image: posterKey ?? "",
                 },
@@ -561,7 +554,6 @@ export default function CreateEvent() {
                             designation: speaker.designation.trim(),
                             company: speaker.company.trim(),
 
-                            // Save the permanent key.
                             image: imageKey ?? "",
                         },
                     );
@@ -576,8 +568,7 @@ export default function CreateEvent() {
                         {
                             event_id: eventId,
                             title: schedule.title.trim(),
-                            start_time: schedule.startTime,
-                            end_time: schedule.endTime,
+                            date_time: schedule.dateTime,
                         },
                     ),
                 );
@@ -612,462 +603,442 @@ export default function CreateEvent() {
     const submitting = isLoading || isUploading;
 
     return (
-        <main className="min-h-screen bg-bg-page px-4 py-8 font-sans text-text-primary sm:px-6 sm:py-12">
-            <div className="mx-auto max-w-3xl">
-                <div className="mb-8 overflow-hidden rounded-xl border border-card-border bg-bg-surface-raised shadow-sm">
-                    <div className="h-2 bg-color-accent" />
+        <div className="flex min-h-screen" style={{ background: "var(--bg-page)" }}>
+            <AdminSidebar />
+            <main className="flex-1 px-4 py-8 font-sans text-text-primary sm:px-6 sm:py-12">
+                <div className="mx-auto max-w-3xl">
+                    <div className="mb-8 overflow-hidden rounded-xl border border-card-border bg-bg-surface-raised shadow-sm">
+                        <div className="h-2 bg-color-accent" />
 
-                    <div className="px-6 py-7 sm:px-9">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-color-accent">
-                            Event management
-                        </p>
+                        <div className="px-6 py-7 sm:px-9">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-color-accent">
+                                Event management
+                            </p>
 
-                        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">
-                            Create event
-                        </h1>
+                            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">
+                                Create event
+                            </h1>
 
-                        <p className="mt-3 max-w-xl text-sm leading-6 text-text-muted">
-                            Add the event information, speakers, images,
-                            and agenda.
-                        </p>
+                            <p className="mt-3 max-w-xl text-sm leading-6 text-text-muted">
+                                Add the event information, speakers, images,
+                                and agenda.
+                            </p>
 
-                        <div className="mt-6 h-px bg-border-default" />
+                            <div className="mt-6 h-px bg-border-default" />
 
-                        <p className="mt-4 text-xs text-text-muted">
-                            <span className="text-color-accent">*</span>{" "}
-                            Required field
-                        </p>
+                            <p className="mt-4 text-xs text-text-muted">
+                                <span className="text-color-accent">*</span>{" "}
+                                Required field
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                {error && (
-                    <div
-                        role="alert"
-                        className="mb-6 rounded-lg border border-danger-border bg-danger-bg px-5 py-4 text-sm text-danger-text"
+                    {error && (
+                        <div
+                            role="alert"
+                            className="mb-6 rounded-lg border border-danger-border bg-danger-bg px-5 py-4 text-sm text-danger-text"
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    {successMessage && (
+                        <div
+                            role="status"
+                            className="mb-6 rounded-lg border border-success-border bg-success-bg px-5 py-4 text-sm text-success-text"
+                        >
+                            {successMessage}
+                        </div>
+                    )}
+
+                    <form
+                        onSubmit={handleSubmit}
+                        className="overflow-hidden rounded-xl border border-card-border bg-bg-surface-raised shadow-sm"
                     >
-                        {error}
-                    </div>
-                )}
+                        <section className="px-6 py-8 sm:px-9">
+                            <SectionTitle
+                                icon={Upload}
+                                title="Event details"
+                                description="Provide the core information for this event."
+                            />
 
-                {successMessage && (
-                    <div
-                        role="status"
-                        className="mb-6 rounded-lg border border-success-border bg-success-bg px-5 py-4 text-sm text-success-text"
-                    >
-                        {successMessage}
-                    </div>
-                )}
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="overflow-hidden rounded-xl border border-card-border bg-bg-surface-raised shadow-sm"
-                >
-                    <section className="px-6 py-8 sm:px-9">
-                        <SectionTitle
-                            icon={Upload}
-                            title="Event details"
-                            description="Provide the core information for this event."
-                        />
-
-                        <div className="flex flex-col gap-7">
-                            <FormField
-                                label="Event name"
-                                htmlFor="event-name"
-                                required
-                            >
-                                <input
-                                    id="event-name"
-                                    type="text"
-                                    value={eventName}
-                                    onChange={(event) =>
-                                        handleNameChange(
-                                            event.target.value,
-                                        )
-                                    }
-                                    placeholder="Annual Tech Summit"
+                            <div className="flex flex-col gap-7">
+                                <FormField
+                                    label="Event name"
+                                    htmlFor="event-name"
                                     required
-                                    className="input w-full"
-                                />
-                            </FormField>
+                                >
+                                    <input
+                                        id="event-name"
+                                        type="text"
+                                        value={eventName}
+                                        onChange={(event) =>
+                                            handleNameChange(
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="Annual Tech Summit"
+                                        required
+                                        className="input w-full"
+                                    />
+                                </FormField>
 
-                            <FormField
-                                label="Event slug"
-                                htmlFor="event-slug"
-                                required
-                            >
-                                <input
-                                    id="event-slug"
-                                    type="text"
-                                    value={eventSlug}
-                                    onChange={(event) => {
-                                        setSlugTouched(true);
-                                        setEventSlug(
-                                            event.target.value,
-                                        );
-                                    }}
-                                    placeholder="annual-tech-summit"
+                                <FormField
+                                    label="Event slug"
+                                    htmlFor="event-slug"
                                     required
-                                    className="input w-full"
-                                />
-                            </FormField>
-
-                            <FormField
-                                label="Description"
-                                htmlFor="event-description"
-                            >
-                                <textarea
-                                    id="event-description"
-                                    value={description}
-                                    onChange={(event) =>
-                                        setDescription(
-                                            event.target.value,
-                                        )
-                                    }
-                                    placeholder="What is this event about?"
-                                    rows={4}
-                                    className="input w-full resize-y"
-                                />
-                            </FormField>
-
-                            <div className="grid gap-7 sm:grid-cols-[2fr_1fr]">
-                                <ImageUpload
-                                    label="Banner image"
-                                    file={bannerFile}
-                                    preview={bannerPreview}
-                                    onSelect={(file) => {
-                                        setBannerFile(file);
-                                        setBannerPreview(
-                                            createPreview(
-                                                file,
-                                                bannerPreview,
-                                            ),
-                                        );
-                                    }}
-                                    onClear={() => {
-                                        if (bannerPreview) {
-                                            URL.revokeObjectURL(
-                                                bannerPreview,
+                                >
+                                    <input
+                                        id="event-slug"
+                                        type="text"
+                                        value={eventSlug}
+                                        onChange={(event) => {
+                                            setSlugTouched(true);
+                                            setEventSlug(
+                                                event.target.value,
                                             );
+                                        }}
+                                        placeholder="annual-tech-summit"
+                                        required
+                                        className="input w-full"
+                                    />
+                                </FormField>
+
+                                <FormField
+                                    label="Description"
+                                    htmlFor="event-description"
+                                >
+                                    <textarea
+                                        id="event-description"
+                                        value={description}
+                                        onChange={(event) =>
+                                            setDescription(
+                                                event.target.value,
+                                            )
                                         }
+                                        placeholder="What is this event about?"
+                                        rows={4}
+                                        className="input w-full resize-y"
+                                    />
+                                </FormField>
 
-                                        setBannerFile(null);
-                                        setBannerPreview(null);
-                                    }}
-                                />
-
-                                <ImageUpload
-                                    label="Poster image"
-                                    file={posterFile}
-                                    preview={posterPreview}
-                                    variant="poster"
-                                    onSelect={(file) => {
-                                        setPosterFile(file);
-                                        setPosterPreview(
-                                            createPreview(
-                                                file,
-                                                posterPreview,
-                                            ),
-                                        );
-                                    }}
-                                    onClear={() => {
-                                        if (posterPreview) {
-                                            URL.revokeObjectURL(
-                                                posterPreview,
+                                <div className="grid gap-7 sm:grid-cols-[2fr_1fr]">
+                                    <ImageUpload
+                                        label="Banner image"
+                                        file={bannerFile}
+                                        preview={bannerPreview}
+                                        onSelect={(file) => {
+                                            setBannerFile(file);
+                                            setBannerPreview(
+                                                createPreview(
+                                                    file,
+                                                    bannerPreview,
+                                                ),
                                             );
-                                        }
+                                        }}
+                                        onClear={() => {
+                                            if (bannerPreview) {
+                                                URL.revokeObjectURL(
+                                                    bannerPreview,
+                                                );
+                                            }
 
-                                        setPosterFile(null);
-                                        setPosterPreview(null);
-                                    }}
+                                            setBannerFile(null);
+                                            setBannerPreview(null);
+                                        }}
+                                    />
+
+                                    <ImageUpload
+                                        label="Poster image"
+                                        file={posterFile}
+                                        preview={posterPreview}
+                                        variant="poster"
+                                        onSelect={(file) => {
+                                            setPosterFile(file);
+                                            setPosterPreview(
+                                                createPreview(
+                                                    file,
+                                                    posterPreview,
+                                                ),
+                                            );
+                                        }}
+                                        onClear={() => {
+                                            if (posterPreview) {
+                                                URL.revokeObjectURL(
+                                                    posterPreview,
+                                                );
+                                            }
+
+                                            setPosterFile(null);
+                                            setPosterPreview(null);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <div className="mx-6 h-px bg-border-default sm:mx-9" />
+
+                        <section className="px-6 py-8 sm:px-9">
+                            <SectionTitle
+                                icon={Users}
+                                title="Speakers"
+                                description="Add people who will speak at the event."
+                            />
+
+                            <div className="flex flex-col">
+                                {speakers.map((speaker, index) => (
+                                    <div
+                                        key={index}
+                                        className="border-b border-border-default py-7 first:pt-0 last:border-b-0"
+                                    >
+                                        <div className="mb-6 flex items-center justify-between">
+                                            <p className="text-sm font-medium text-text-muted">
+                                                Speaker {index + 1}
+                                            </p>
+
+                                            {speakers.length > 1 && (
+                                                <RemoveButton
+                                                    label={`Remove speaker ${index + 1}`}
+                                                    onClick={() =>
+                                                        removeSpeaker(index)
+                                                    }
+                                                />
+                                            )}
+                                        </div>
+
+                                        <div className="grid gap-7 sm:grid-cols-[150px_1fr]">
+                                            <ImageUpload
+                                                label="Photo"
+                                                file={speaker.imageFile}
+                                                preview={
+                                                    speaker.imagePreview
+                                                }
+                                                variant="square"
+                                                onSelect={(file) => {
+                                                    updateSpeaker(index, {
+                                                        imageFile: file,
+                                                        imagePreview:
+                                                            createPreview(
+                                                                file,
+                                                                speaker.imagePreview,
+                                                            ),
+                                                    });
+                                                }}
+                                                onClear={() => {
+                                                    if (
+                                                        speaker.imagePreview
+                                                    ) {
+                                                        URL.revokeObjectURL(
+                                                            speaker.imagePreview,
+                                                        );
+                                                    }
+
+                                                    updateSpeaker(index, {
+                                                        imageFile: null,
+                                                        imagePreview: null,
+                                                    });
+                                                }}
+                                            />
+
+                                            <div className="flex flex-col gap-6">
+                                                <FormField
+                                                    label="Name"
+                                                    htmlFor={`speaker-name-${index}`}
+                                                >
+                                                    <input
+                                                        id={`speaker-name-${index}`}
+                                                        type="text"
+                                                        value={speaker.name}
+                                                        onChange={(event) =>
+                                                            updateSpeaker(
+                                                                index,
+                                                                {
+                                                                    name: event
+                                                                        .target
+                                                                        .value,
+                                                                },
+                                                            )
+                                                        }
+                                                        placeholder="Jane Doe"
+                                                        className="input w-full"
+                                                    />
+                                                </FormField>
+
+                                                <FormField
+                                                    label="Designation"
+                                                    htmlFor={`speaker-designation-${index}`}
+                                                >
+                                                    <input
+                                                        id={`speaker-designation-${index}`}
+                                                        type="text"
+                                                        value={
+                                                            speaker.designation
+                                                        }
+                                                        onChange={(event) =>
+                                                            updateSpeaker(
+                                                                index,
+                                                                {
+                                                                    designation:
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                },
+                                                            )
+                                                        }
+                                                        placeholder="Engineering Lead"
+                                                        className="input w-full"
+                                                    />
+                                                </FormField>
+
+                                                <FormField
+                                                    label="Company"
+                                                    htmlFor={`speaker-company-${index}`}
+                                                >
+                                                    <input
+                                                        id={`speaker-company-${index}`}
+                                                        type="text"
+                                                        value={speaker.company}
+                                                        onChange={(event) =>
+                                                            updateSpeaker(
+                                                                index,
+                                                                {
+                                                                    company:
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                },
+                                                            )
+                                                        }
+                                                        placeholder="Acme Inc."
+                                                        className="input w-full"
+                                                    />
+                                                </FormField>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-3">
+                                <AddButton
+                                    label="Add speaker"
+                                    onClick={addSpeaker}
                                 />
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    <div className="mx-6 h-px bg-border-default sm:mx-9" />
+                        <div className="mx-6 h-px bg-border-default sm:mx-9" />
 
-                    <section className="px-6 py-8 sm:px-9">
-                        <SectionTitle
-                            icon={Users}
-                            title="Speakers"
-                            description="Add people who will speak at the event."
-                        />
+                        <section className="px-6 py-8 sm:px-9">
+                            <SectionTitle
+                                icon={CalendarClock}
+                                title="Schedule"
+                                description="Create the agenda for your event."
+                            />
 
-                        <div className="flex flex-col">
-                            {speakers.map((speaker, index) => (
-                                <div
-                                    key={index}
-                                    className="border-b border-border-default py-7 first:pt-0 last:border-b-0"
-                                >
-                                    <div className="mb-6 flex items-center justify-between">
-                                        <p className="text-sm font-medium text-text-muted">
-                                            Speaker {index + 1}
-                                        </p>
+                            <div className="flex flex-col">
+                                {schedules.map((schedule, index) => (
+                                    <div
+                                        key={index}
+                                        className="border-b border-border-default py-7 first:pt-0 last:border-b-0"
+                                    >
+                                        <div className="mb-6 flex items-center justify-between">
+                                            <p className="text-sm font-medium text-text-muted">
+                                                Schedule item {index + 1}
+                                            </p>
 
-                                        {speakers.length > 1 && (
-                                            <RemoveButton
-                                                label={`Remove speaker ${index + 1}`}
-                                                onClick={() =>
-                                                    removeSpeaker(index)
-                                                }
-                                            />
-                                        )}
-                                    </div>
+                                            {schedules.length > 1 && (
+                                                <RemoveButton
+                                                    label={`Remove schedule item ${index + 1}`}
+                                                    onClick={() =>
+                                                        removeSchedule(index)
+                                                    }
+                                                />
+                                            )}
+                                        </div>
 
-                                    <div className="grid gap-7 sm:grid-cols-[150px_1fr]">
-                                        <ImageUpload
-                                            label="Photo"
-                                            file={speaker.imageFile}
-                                            preview={
-                                                speaker.imagePreview
-                                            }
-                                            variant="square"
-                                            onSelect={(file) => {
-                                                updateSpeaker(index, {
-                                                    imageFile: file,
-                                                    imagePreview:
-                                                        createPreview(
-                                                            file,
-                                                            speaker.imagePreview,
-                                                        ),
-                                                });
-                                            }}
-                                            onClear={() => {
-                                                if (
-                                                    speaker.imagePreview
-                                                ) {
-                                                    URL.revokeObjectURL(
-                                                        speaker.imagePreview,
-                                                    );
-                                                }
-
-                                                updateSpeaker(index, {
-                                                    imageFile: null,
-                                                    imagePreview: null,
-                                                });
-                                            }}
-                                        />
-
-                                        <div className="flex flex-col gap-6">
+                                        <div className="grid gap-6 sm:grid-cols-[2fr_1fr]">
                                             <FormField
-                                                label="Name"
-                                                htmlFor={`speaker-name-${index}`}
+                                                label="Title"
+                                                htmlFor={`schedule-title-${index}`}
                                             >
                                                 <input
-                                                    id={`speaker-name-${index}`}
+                                                    id={`schedule-title-${index}`}
                                                     type="text"
-                                                    value={speaker.name}
+                                                    value={schedule.title}
                                                     onChange={(event) =>
-                                                        updateSpeaker(
+                                                        updateSchedule(
                                                             index,
                                                             {
-                                                                name: event
+                                                                title: event
                                                                     .target
                                                                     .value,
                                                             },
                                                         )
                                                     }
-                                                    placeholder="Jane Doe"
+                                                    placeholder="Opening keynote"
                                                     className="input w-full"
                                                 />
                                             </FormField>
 
                                             <FormField
-                                                label="Designation"
-                                                htmlFor={`speaker-designation-${index}`}
+                                                label="Date & Time"
+                                                htmlFor={`schedule-datetime-${index}`}
                                             >
                                                 <input
-                                                    id={`speaker-designation-${index}`}
-                                                    type="text"
+                                                    id={`schedule-datetime-${index}`}
+                                                    type="datetime-local"
                                                     value={
-                                                        speaker.designation
+                                                        schedule.dateTime
                                                     }
                                                     onChange={(event) =>
-                                                        updateSpeaker(
+                                                        updateSchedule(
                                                             index,
                                                             {
-                                                                designation:
+                                                                dateTime:
                                                                     event
                                                                         .target
                                                                         .value,
                                                             },
                                                         )
                                                     }
-                                                    placeholder="Engineering Lead"
-                                                    className="input w-full"
-                                                />
-                                            </FormField>
-
-                                            <FormField
-                                                label="Company"
-                                                htmlFor={`speaker-company-${index}`}
-                                            >
-                                                <input
-                                                    id={`speaker-company-${index}`}
-                                                    type="text"
-                                                    value={speaker.company}
-                                                    onChange={(event) =>
-                                                        updateSpeaker(
-                                                            index,
-                                                            {
-                                                                company:
-                                                                    event
-                                                                        .target
-                                                                        .value,
-                                                            },
-                                                        )
-                                                    }
-                                                    placeholder="Acme Inc."
                                                     className="input w-full"
                                                 />
                                             </FormField>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+
+                            <div className="mt-3">
+                                <AddButton
+                                    label="Add schedule item"
+                                    onClick={addSchedule}
+                                />
+                            </div>
+                        </section>
+
+                        <div className="sticky bottom-0 flex items-center justify-between border-t border-border-default bg-bg-surface-raised/95 px-6 py-5 backdrop-blur sm:px-9">
+                            <span className="text-xs text-text-muted">
+                                Your event will be saved when submitted.
+                            </span>
+
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="btn btn-primary"
+                            >
+                                {submitting
+                                    ? isUploading
+                                        ? "Uploading..."
+                                        : "Creating..."
+                                    : "Create event"}
+                            </button>
                         </div>
-
-                        <div className="mt-3">
-                            <AddButton
-                                label="Add speaker"
-                                onClick={addSpeaker}
-                            />
-                        </div>
-                    </section>
-
-                    <div className="mx-6 h-px bg-border-default sm:mx-9" />
-
-                    <section className="px-6 py-8 sm:px-9">
-                        <SectionTitle
-                            icon={CalendarClock}
-                            title="Schedule"
-                            description="Create the agenda for your event."
-                        />
-
-                        <div className="flex flex-col">
-                            {schedules.map((schedule, index) => (
-                                <div
-                                    key={index}
-                                    className="border-b border-border-default py-7 first:pt-0 last:border-b-0"
-                                >
-                                    <div className="mb-6 flex items-center justify-between">
-                                        <p className="text-sm font-medium text-text-muted">
-                                            Schedule item {index + 1}
-                                        </p>
-
-                                        {schedules.length > 1 && (
-                                            <RemoveButton
-                                                label={`Remove schedule item ${index + 1}`}
-                                                onClick={() =>
-                                                    removeSchedule(index)
-                                                }
-                                            />
-                                        )}
-                                    </div>
-
-                                    <div className="grid gap-6 sm:grid-cols-[2fr_1fr_1fr]">
-                                        <FormField
-                                            label="Title"
-                                            htmlFor={`schedule-title-${index}`}
-                                        >
-                                            <input
-                                                id={`schedule-title-${index}`}
-                                                type="text"
-                                                value={schedule.title}
-                                                onChange={(event) =>
-                                                    updateSchedule(
-                                                        index,
-                                                        {
-                                                            title: event
-                                                                .target
-                                                                .value,
-                                                        },
-                                                    )
-                                                }
-                                                placeholder="Opening keynote"
-                                                className="input w-full"
-                                            />
-                                        </FormField>
-
-                                        <FormField
-                                            label="Start time"
-                                            htmlFor={`schedule-start-${index}`}
-                                        >
-                                            <input
-                                                id={`schedule-start-${index}`}
-                                                type="time"
-                                                value={
-                                                    schedule.startTime
-                                                }
-                                                onChange={(event) =>
-                                                    updateSchedule(
-                                                        index,
-                                                        {
-                                                            startTime:
-                                                                event
-                                                                    .target
-                                                                    .value,
-                                                        },
-                                                    )
-                                                }
-                                                className="input w-full"
-                                            />
-                                        </FormField>
-
-                                        <FormField
-                                            label="End time"
-                                            htmlFor={`schedule-end-${index}`}
-                                        >
-                                            <input
-                                                id={`schedule-end-${index}`}
-                                                type="time"
-                                                value={schedule.endTime}
-                                                onChange={(event) =>
-                                                    updateSchedule(
-                                                        index,
-                                                        {
-                                                            endTime:
-                                                                event
-                                                                    .target
-                                                                    .value,
-                                                        },
-                                                    )
-                                                }
-                                                className="input w-full"
-                                            />
-                                        </FormField>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-3">
-                            <AddButton
-                                label="Add schedule item"
-                                onClick={addSchedule}
-                            />
-                        </div>
-                    </section>
-
-                    <div className="sticky bottom-0 flex items-center justify-between border-t border-border-default bg-bg-surface-raised/95 px-6 py-5 backdrop-blur sm:px-9">
-                        <span className="text-xs text-text-muted">
-                            Your event will be saved when submitted.
-                        </span>
-
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="btn btn-primary"
-                        >
-                            {submitting
-                                ? isUploading
-                                    ? "Uploading..."
-                                    : "Creating..."
-                                : "Create event"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </main>
+                    </form>
+                </div>
+            </main>
+        </div>
     );
 }

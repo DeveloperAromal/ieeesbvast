@@ -19,6 +19,8 @@ export const APIENDPOINT = {
   CreateSchedule: `${baseUrl}/api/v1/events/schedules`,
 
   CreateRegistration: `${baseUrl}/api/v1/registrations`,
+  GetRegistrationsByEventId: (eventId: string) =>
+    `${baseUrl}/api/v1/registrations/${eventId}`,
 
   UploadFile: `${baseUrl}/api/v1/upload`,
   GetImageUrl: (key: string) =>

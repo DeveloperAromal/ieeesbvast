@@ -5,6 +5,7 @@ export interface Event {
     description: string;
     banner_image: string;
     poster_image: string;
+    mode?: string;
 
     schedules?: Schedule[];
     speakers?: Speaker[];
@@ -14,8 +15,7 @@ export interface Schedule {
     id: string;
     event_id: string;
     title: string;
-    start_time: string;
-    end_time: string;
+    date_time: string;
 }
 
 export interface Speaker {

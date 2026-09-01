@@ -6,6 +6,7 @@ import (
 
 type Service interface {
 	CreateRegistration(ctx context.Context, registration Registration) (Registration, error)
+	GetRegistrationsByEventId(ctx context.Context, eventId string) ([]Registration, error)
 }
 
 type service struct {
@@ -20,4 +21,8 @@ func NewService(repo Repository) *service {
 
 func (srv *service) CreateRegistration(ctx context.Context, registration Registration) (Registration, error) {
 	return srv.repo.CreateRegistration(ctx, registration)
+}
+
+func (srv *service) GetRegistrationsByEventId(ctx context.Context, eventId string) ([]Registration, error) {
+	return srv.repo.GetRegistrationsByEventId(ctx, eventId)
 }

@@ -344,8 +344,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter, 'Inter', sans-serif);
+  --font-mono: var(--font-inter, 'Inter', sans-serif);
 
   --color-ink: var(--color-ink);
   --color-accent: var(--color-accent);
@@ -438,8 +438,10 @@
 }
 
 body {
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-inter, 'Inter', sans-serif);
   transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .card {
@@ -770,7 +772,7 @@ body {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 
   html {

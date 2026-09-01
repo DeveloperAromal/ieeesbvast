@@ -60,10 +60,9 @@ func (repo *repository) CreateSchedule(ctx context.Context, schedule Schedule) (
 			(
 				event_id,
 				title,
-				start_time,
-				end_time
+				date_time
 			)
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1, $2, $3)
 		RETURNING id
 	`
 
@@ -72,8 +71,7 @@ func (repo *repository) CreateSchedule(ctx context.Context, schedule Schedule) (
 		query,
 		schedule.EventID,
 		schedule.Title,
-		schedule.StartTime,
-		schedule.EndTime,
+		schedule.DateTime,
 	).Scan(&schedule.ID)
 
 	return schedule, err
@@ -124,8 +122,7 @@ func (repo *repository) GetAllEvents(ctx context.Context) ([]Event, error) {
 						'id', s.id,
 						'event_id', s.event_id,
 						'title', s.title,
-						'start_time', s.start_time,
-						'end_time', s.end_time
+						'date_time', s.date_time
 					)
 				) FILTER (WHERE s.id IS NOT NULL),
 				'[]'
@@ -222,8 +219,7 @@ func (repo *repository) GetEventBySlug(ctx context.Context, slug string) (Event,
 						'id', s.id,
 						'event_id', s.event_id,
 						'title', s.title,
-						'start_time', s.start_time,
-						'end_time', s.end_time
+						'date_time', s.date_time
 					)
 				) FILTER (WHERE s.id IS NOT NULL),
 				'[]'

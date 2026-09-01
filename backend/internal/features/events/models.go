@@ -16,8 +16,7 @@ type Schedule struct {
 	ID        string `json:"id" db:"id"`
 	EventID   string `json:"event_id" db:"event_id"`
 	Title     string `json:"title" db:"title"`
-	StartTime string `json:"start_time" db:"start_time"`
-	EndTime   string `json:"end_time" db:"end_time"`
+	DateTime  string `json:"date_time" db:"date_time"`
 }
 
 type Speaker struct {

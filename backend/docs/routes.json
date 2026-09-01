@@ -17,6 +17,10 @@
 },
 {
 "method": "GET",
+"path": "/api/v1/registrations/:eventId"
+},
+{
+"method": "GET",
 "path": "/api/v1/upload/*key"
 },
 {

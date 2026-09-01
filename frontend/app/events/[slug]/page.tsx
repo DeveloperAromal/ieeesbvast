@@ -16,23 +16,38 @@ export default function EventDetailPage() {
     const { makeApiCall } = useApiCall();
 
     const [event, setEvent] = useState<Event | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchEvent = async () => {
-            const res = await makeApiCall(
-                "GET",
-                APIENDPOINT.GetEventBySlug(slug)
-            )
+            setLoading(true);
+            try {
+                const res = await makeApiCall(
+                    "GET",
+                    APIENDPOINT.GetEventBySlug(slug)
+                )
 
-            if (res.success && res.data) {
-                setEvent(res.data)
+                console.log("Event API Response:", res);
+
+                if (res.success && res.data) {
+                    console.log("Event Data:", res.data);
+                    console.log("Schedules:", res.data.schedules);
+                    console.log("Speakers:", res.data.speakers);
+                    setEvent(res.data)
+                }
+            } catch (error) {
+                console.error("Error fetching event:", error);
+            } finally {
+                setLoading(false);
             }
         }
 
-        fetchEvent()
+        if (slug) {
+            fetchEvent()
+        }
     }, [slug, makeApiCall])
 
-    if (!event) {
+    if (loading) {
         return (
             <main
                 className="flex min-h-screen items-center justify-center"
@@ -45,16 +60,25 @@ export default function EventDetailPage() {
         );
     }
 
+    if (!event) {
+        return (
+            <main
+                className="flex min-h-screen items-center justify-center"
+                style={{ background: "var(--bg-page)" }}
+            >
+                <p style={{ color: "var(--text-secondary)" }}>
+                    Event not found
+                </p>
+            </main>
+        );
+    }
+
     return (
         <main className="min-h-screen" style={{ background: "var(--bg-page)" }}>
             <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-                {/* Banner Image with auto-refresh */}
                 <BackgroundImage
                     imageKey={event?.banner_image}
                     className="h-80 w-full rounded-2xl"
-                    style={{
-                        border: "1px solid var(--border-default)",
-                    }}
                     refreshInterval={55}
                 />
 
@@ -71,28 +95,43 @@ export default function EventDetailPage() {
                             </h1>
 
                             <div className="mt-6 space-y-3">
-                                <div
-                                    className="flex items-center gap-2"
-                                    style={{ color: "var(--text-secondary)" }}
-                                >
-                                    <Calendar size={18} style={{ color: "var(--text-muted)" }} />
-                                    <span>September 20, 2026</span>
+                                {/* Mode - shows "Online" or value from event.mode */}
+                                <div className="flex items-center gap-2">
+                                    <MapPin size={18} />
+                                    <span>{event?.mode || "Online"}</span>
                                 </div>
-                                <div
-                                    className="flex items-center gap-2"
-                                    style={{ color: "var(--text-secondary)" }}
-                                >
-                                    <Clock size={18} style={{ color: "var(--text-muted)" }} />
-                                    <span>9:00 AM - 6:00 PM</span>
-                                </div>
-                                <div
-                                    className="flex items-center gap-2"
-                                    style={{ color: "var(--text-secondary)" }}
-                                >
-                                    <MapPin size={18} style={{ color: "var(--text-muted)" }} />
-                                    <span>Bangalore, India</span>
-                                </div>
+
+                                {/* Date - extracted from first schedule */}
+                                {event?.schedules && event.schedules.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <Calendar size={18} />
+                                        <span>
+                                            {new Date(event.schedules[0].date_time)
+                                                .toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Time - extracted from first schedule */}
+                                {event?.schedules && event.schedules.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <Clock size={18} />
+                                        <span>
+                                            {new Date(event.schedules[0].date_time)
+                                                .toLocaleTimeString('en-US', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                })}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
+
                         </div>
 
                         <section>
@@ -112,7 +151,7 @@ export default function EventDetailPage() {
                         </section>
 
                         {/* Schedule Section */}
-                        {event?.schedules && event.schedules.length > 0 && (
+                        {event?.schedules && Array.isArray(event.schedules) && event.schedules.length > 0 ? (
                             <section>
                                 <h2
                                     className="text-2xl font-semibold"
@@ -130,27 +169,26 @@ export default function EventDetailPage() {
                                                 borderBottom: index !== event.schedules!.length - 1 ? "1px solid var(--border-default)" : "none"
                                             }}
                                         >
-                                            <span className="w-24 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                                                {schedule.start_time}
+                                            <span className="w-40 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                                                {new Date(schedule.date_time).toLocaleString()}
                                             </span>
                                             <div>
                                                 <span style={{ color: "var(--text-primary)" }}>
                                                     {schedule.title}
                                                 </span>
-                                                {schedule.end_time && (
-                                                    <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
-                                                        Ends at {schedule.end_time}
-                                                    </p>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </section>
+                        ) : (
+                            <div style={{ color: "var(--text-muted)" }}>
+                                No schedules available
+                            </div>
                         )}
 
                         {/* Speakers Section */}
-                        {event?.speakers && event.speakers.length > 0 && (
+                        {event?.speakers && Array.isArray(event.speakers) && event.speakers.length > 0 ? (
                             <section>
                                 <h2
                                     className="text-2xl font-semibold"
@@ -202,6 +240,10 @@ export default function EventDetailPage() {
                                     ))}
                                 </div>
                             </section>
+                        ) : (
+                            <div style={{ color: "var(--text-muted)" }}>
+                                No speakers available
+                            </div>
                         )}
                     </div>
 
@@ -224,28 +266,12 @@ export default function EventDetailPage() {
                                 style={{ borderTop: "1px solid var(--border-default)" }}
                             />
 
-                            <p
-                                className="flex items-center gap-2 text-sm"
-                                style={{ color: "var(--text-muted)" }}
-                            >
-                                <Clock size={14} />
-                                Registration closes September 18, 2026
-                            </p>
-
                             <Link
                                 href={`/register/${event.id}`}
                                 className="btn btn-primary mt-6 w-full justify-center py-3 text-center"
                             >
                                 Register now
                             </Link>
-
-                            <p
-                                className="mt-4 flex items-center justify-center gap-1.5 text-sm"
-                                style={{ color: "var(--text-muted)" }}
-                            >
-                                <Users size={14} />
-                                124 people registered
-                            </p>
                         </div>
                     </aside>
                 </div>

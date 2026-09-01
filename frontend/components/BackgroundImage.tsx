@@ -71,8 +71,9 @@ export function BackgroundImage({
         ...style,
         backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : undefined,
         backgroundColor: !backgroundUrl ? fallbackColor : undefined,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
         backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
       }}
     >
       {children}

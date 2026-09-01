@@ -53,3 +53,38 @@ func (hdlr *handler) CreateNewRegistration(c *gin.Context) {
 	)
 
 }
+
+func (hdlr *handler) GetRegistrationsByEventId(c *gin.Context) {
+
+	eventId := c.Param("eventId")
+
+	if eventId == "" {
+		response.Error(
+			c.Writer,
+			false,
+			http.StatusBadRequest,
+			"Event ID is required",
+		)
+		return
+	}
+
+	result, err := hdlr.srv.GetRegistrationsByEventId(c.Request.Context(), eventId)
+	if err != nil {
+		response.Error(
+			c.Writer,
+			false,
+			http.StatusInternalServerError,
+			"Unexpected error occured"+err.Error(),
+		)
+		return
+	}
+
+	response.Success(
+		c.Writer,
+		true,
+		http.StatusOK,
+		result,
+		"Successfully fetched registrations",
+	)
+
+}
