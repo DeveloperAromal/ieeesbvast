@@ -192,77 +192,79 @@ export default function EventDetailPage() {
 
                             {event?.schedules && Array.isArray(event.schedules) && event.schedules.length > 0 ? (
                                 <div className="mt-5">
-                                    {event.schedules.map((schedule, index) => {
-                                        const isLast = index === event.schedules!.length - 1;
-                                        const d = new Date(schedule.date_time);
-                                        return (
-                                            <div
-                                                key={schedule.id || index}
-                                                className="relative flex gap-4 sm:gap-6"
-                                            >
-                                                {/* Rail: dot + connecting line */}
-                                                <div className="flex flex-col items-center">
-                                                    <div
-                                                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold sm:h-9 sm:w-9 sm:text-xs"
-                                                        style={{
-                                                            background: index === 0
-                                                                ? "var(--text-accent, #6366f1)"
-                                                                : "var(--bg-surface-sunken)",
-                                                            color: index === 0
-                                                                ? "#fff"
-                                                                : "var(--text-secondary)",
-                                                            border: index === 0
-                                                                ? "none"
-                                                                : "1px solid var(--border-default)",
-                                                        }}
-                                                    >
-                                                        {index + 1}
-                                                    </div>
-                                                    {!isLast && (
-                                                        <div
-                                                            className="w-px flex-1"
-                                                            style={{
-                                                                background: "var(--border-default)",
-                                                                minHeight: "24px",
-                                                            }}
-                                                        />
-                                                    )}
-                                                </div>
-
-                                                {/* Content */}
+                                    {[...event.schedules]
+                                        .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+                                        .map((schedule, index, sortedSchedules) => {
+                                            const isLast = index === sortedSchedules.length - 1;
+                                            const d = new Date(schedule.date_time);
+                                            return (
                                                 <div
-                                                    className={`min-w-0 ${isLast ? "pb-0" : "pb-6 sm:pb-8"}`}
+                                                    key={schedule.id || index}
+                                                    className="relative flex gap-4 sm:gap-6"
                                                 >
-                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                        <span
-                                                            className="text-xs font-semibold sm:text-sm"
-                                                            style={{ color: "var(--text-accent, #6366f1)" }}
+                                                    {/* Rail: dot + connecting line */}
+                                                    <div className="flex flex-col items-center">
+                                                        <div
+                                                            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold sm:h-9 sm:w-9 sm:text-xs"
+                                                            style={{
+                                                                background: index === 0
+                                                                    ? "var(--text-accent, #6366f1)"
+                                                                    : "var(--bg-surface-sunken)",
+                                                                color: index === 0
+                                                                    ? "#fff"
+                                                                    : "var(--text-secondary)",
+                                                                border: index === 0
+                                                                    ? "none"
+                                                                    : "1px solid var(--border-default)",
+                                                            }}
                                                         >
-                                                            {d.toLocaleTimeString(undefined, {
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                            })}
-                                                        </span>
-                                                        <span
-                                                            className="text-xs sm:text-sm"
-                                                            style={{ color: "var(--text-muted)" }}
-                                                        >
-                                                            {d.toLocaleDateString(undefined, {
-                                                                month: "short",
-                                                                day: "numeric",
-                                                            })}
-                                                        </span>
+                                                            {index + 1}
+                                                        </div>
+                                                        {!isLast && (
+                                                            <div
+                                                                className="w-px flex-1"
+                                                                style={{
+                                                                    background: "var(--border-default)",
+                                                                    minHeight: "24px",
+                                                                }}
+                                                            />
+                                                        )}
                                                     </div>
-                                                    <p
-                                                        className="mt-1 text-sm font-medium leading-snug sm:text-base"
-                                                        style={{ color: "var(--text-primary)" }}
+
+                                                    {/* Content */}
+                                                    <div
+                                                        className={`min-w-0 ${isLast ? "pb-0" : "pb-6 sm:pb-8"}`}
                                                     >
-                                                        {schedule.title}
-                                                    </p>
+                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                            <span
+                                                                className="text-xs font-semibold sm:text-sm"
+                                                                style={{ color: "var(--text-accent, #6366f1)" }}
+                                                            >
+                                                                {d.toLocaleTimeString(undefined, {
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit",
+                                                                })}
+                                                            </span>
+                                                            <span
+                                                                className="text-xs sm:text-sm"
+                                                                style={{ color: "var(--text-muted)" }}
+                                                            >
+                                                                {d.toLocaleDateString(undefined, {
+                                                                    month: "short",
+                                                                    day: "numeric",
+                                                                })}
+                                                            </span>
+                                                        </div>
+                                                        <p
+                                                            className="mt-1 text-sm font-medium leading-snug sm:text-base"
+                                                            style={{ color: "var(--text-primary)" }}
+                                                        >
+                                                            {schedule.title}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
                                 </div>
                             ) : (
                                 <p
@@ -395,7 +397,6 @@ export default function EventDetailPage() {
                 </div>
             </section>
 
-            {/* Mobile sticky CTA bar */}
             <div
                 className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-between gap-4 border-t px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden"
                 style={{

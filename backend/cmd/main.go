@@ -2,8 +2,10 @@ package main
 
 import (
 	// "fmt"
+	"fmt"
 	"log"
 	"os"
+	"time"
 
 	//"time"
 
@@ -14,6 +16,7 @@ import (
 
 	databseAdapter "github.com/DeveloperAromal/ieeesbvast/internal/adapters/postgresql"
 	uploadModule "github.com/DeveloperAromal/ieeesbvast/internal/features/upload"
+	scheduler "github.com/DeveloperAromal/ieeesbvast/internal/scheduler"
 	routeDump "github.com/DeveloperAromal/ieeesbvast/pkg/dump"
 )
 
@@ -44,18 +47,35 @@ func main() {
 	// 		Uncomment this in production
 	//		USE:
 	//			This ping /health endpoint in each 10 minutes to avoid render cooldown
-	// go func() {
-	// 	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		endpoint := os.Getenv("PROD_HEALTH_ENDPOINT")
 
-	// 	for range ticker.C {
-	// 		err := scheduler.PingHost(os.Getenv("PROD_HEALTH_ENDPOINT"))
-	// 		if err != nil {
-	// 			logger.Error(fmt.Sprintf("Ping failed: %v", err))
-	// 		} else {
-	// 			logger.Success("Ping success")
-	// 		}
-	// 	}
-	// }()
+		if endpoint == "" {
+			logger.Error("PROD_HEALTH_ENDPOINT is not set")
+			return
+		}
+
+		logger.Info(fmt.Sprintf("Pinging host: %s", endpoint))
+
+		if err := scheduler.PingHost(endpoint); err != nil {
+			logger.Error(fmt.Sprintf("Ping failed: %v", err))
+		} else {
+			logger.Success("Ping success")
+		}
+
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			logger.Info(fmt.Sprintf("Pinging host: %s", endpoint))
+
+			if err := scheduler.PingHost(endpoint); err != nil {
+				logger.Error(fmt.Sprintf("Ping failed: %v", err))
+			} else {
+				logger.Success("Ping success")
+			}
+		}
+	}()
 
 	bucket := uploadModule.NewS3Bucket()
 
