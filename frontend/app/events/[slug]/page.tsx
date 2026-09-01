@@ -74,8 +74,8 @@ export default function EventDetailPage() {
     }
 
     return (
-        <main className="min-h-screen" style={{ background: "var(--bg-page)" }}>
-            <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
+        <main className="h-screen" style={{ background: "var(--bg-page)" }}>
+            <section className="mx-auto max-w-7xl px-6 py-6 lg:px-6">
                 <BackgroundImage
                     imageKey={event?.banner_image}
                     className="h-80 w-full rounded-2xl"
