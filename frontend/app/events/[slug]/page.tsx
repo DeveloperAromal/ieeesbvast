@@ -421,13 +421,22 @@ export default function EventDetailPage() {
                         Free
                     </p>
                 </div>
-                <Link
-                    href={`/register/${event.id}`}
-                    className="btn btn-primary flex flex-shrink-0 items-center gap-2 px-6 py-2.5 font-semibold"
-                >
-                    Register
-                    <ArrowRight size={16} />
-                </Link>
+                {event.is_reg_closed ? (
+                    <button
+                        disabled
+                        className="btn btn-primary flex w-full cursor-not-allowed items-center justify-center gap-2 py-3 text-center font-semibold opacity-50"
+                    >
+                        Registration Closed
+                    </button>
+                ) : (
+                    <Link
+                        href={`/register/${event.id}`}
+                        className="btn btn-primary flex w-full items-center justify-center gap-2 py-3 text-center font-semibold"
+                    >
+                        Register now
+                        <ArrowRight size={16} />
+                    </Link>
+                )}
             </div>
         </main>
     );
