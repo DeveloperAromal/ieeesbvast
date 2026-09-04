@@ -10,8 +10,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	authModule "github.com/DeveloperAromal/ieeesbvast/internal/features/auth"
 	eventModule "github.com/DeveloperAromal/ieeesbvast/internal/features/events"
-	registrationModule "github.com/DeveloperAromal/ieeesbvast/internal/features/registration"
+	regModule "github.com/DeveloperAromal/ieeesbvast/internal/features/registration"
 	uploadModule "github.com/DeveloperAromal/ieeesbvast/internal/features/upload"
 
 	routers "github.com/DeveloperAromal/ieeesbvast/internal/interfaces"
@@ -69,7 +70,8 @@ func (app *application) mount() *gin.Engine {
 	api := r.Group("/api/v1")
 
 	modules := []routers.RouterInterface{
-		registrationModule.NewRouter(app.db),
+		authModule.NewRouter(app.db, regModule.NewRepository(app.db)),
+		regModule.NewRouter(app.db),
 		eventModule.NewRouter(app.db),
 		uploadModule.NewRouter(app.bucket),
 	}

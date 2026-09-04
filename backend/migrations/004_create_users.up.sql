@@ -1,0 +1,26 @@
+CREATE TABLE users (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+	name VARCHAR(200) NOT NULL,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	password TEXT NOT NULL,
+	reg_id UUID,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+	CONSTRAINT fk_user_registration
+		FOREIGN KEY (reg_id)
+		REFERENCES registrations(id)
+		ON DELETE SET NULL
+);
+
+CREATE TABLE sessions (
+	id UUID PRIMARY KEY,
+	token_hash VARCHAR(255) NOT NULL UNIQUE,
+	expires_at TIMESTAMP NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+	CONSTRAINT fk_session_user
+		FOREIGN KEY (id)
+		REFERENCES users(id)
+		ON DELETE CASCADE
+);

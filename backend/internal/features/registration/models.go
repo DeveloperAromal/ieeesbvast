@@ -8,4 +8,5 @@ type Registration struct {
 	Email       string `json:"email" db:"email"`
 	CollageName string `json:"collage_name"  db:"collage_name"`
 	EventID     string `json:"event_id" db:"event_id"`
+	EventName   string `json:"event_name" db:"event_name"`
 }

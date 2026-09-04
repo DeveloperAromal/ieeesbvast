@@ -91,16 +91,18 @@ func (repo *repository) GetRegistrationsByEventId(ctx context.Context, eventId s
 
 	query := `
 		SELECT
-			id,
-			event_id,
-			fname,
-			lname,
-			phonenumber,
-			email,
-			collage_name
-		FROM registrations
-		WHERE event_id = $1
-		ORDER BY created_at DESC
+			r.id,
+			r.event_id,
+			e.event_name,
+			r.fname,
+			r.lname,
+			r.phonenumber,
+			r.email,
+			r.collage_name
+		FROM registrations r
+		JOIN events e ON e.id = r.event_id
+		WHERE r.event_id = $1
+		ORDER BY r.created_at DESC
 	`
 
 	rows, err := repo.db.QueryContext(ctx, query, eventId)
@@ -117,12 +119,14 @@ func (repo *repository) GetRegistrationsByEventId(ctx context.Context, eventId s
 		err := rows.Scan(
 			&registration.ID,
 			&registration.EventID,
+			&registration.EventName,
 			&registration.FName,
 			&registration.LName,
 			&registration.Phonenumber,
 			&registration.Email,
 			&registration.CollageName,
 		)
+
 		if err != nil {
 			return nil, err
 		}

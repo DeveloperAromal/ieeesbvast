@@ -30,17 +30,3 @@ func RenderInviteEmail(data InviteData) (string, error) {
 
 	return buf.String(), nil
 }
-
-func RenderAccountActivationEmail(data ActivationData) (string, error) {
-	tmpl, err := template.New("invite").Parse(ActivateEmailHTML)
-	if err != nil {
-		return "", err
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
-}

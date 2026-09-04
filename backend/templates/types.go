@@ -2,11 +2,8 @@ package templates
 
 type InviteData struct {
 	Email      string
+	Name       string
 	Password   string
 	InviteLink string
-}
-
-type ActivationData struct {
-	Name       string
-	InviteLink string
+	Event      string
 }

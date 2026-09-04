@@ -17,6 +17,10 @@
 },
 {
 "method": "GET",
+"path": "/api/v1/auth/:eventID/create-event-users"
+},
+{
+"method": "GET",
 "path": "/api/v1/registrations/:eventId"
 },
 {
