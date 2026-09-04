@@ -82,7 +82,7 @@ export default function RegisterPage() {
                 setRegistrationSuccess(true);
                 setTimeout(() => router.push("/events"), 2000);
             } else {
-                setRegistrationError(result.message || "Registration failed");
+                setRegistrationError(result.message);
             }
         } catch (error) {
             setRegistrationError("An error occurred");
@@ -104,10 +104,8 @@ export default function RegisterPage() {
         );
     }
 
-    // Shared underline-input styling — no boxes, just a bottom rule that
-    // brightens on focus and reddens on error.
     const fieldClass =
-        "w-full bg-transparent text-base py-2.5 outline-none border-0 border-b transition-colors duration-150 placeholder:text-[var(--text-muted)]";
+        "w-full bg-transparent text-base py-2.5 px-2 outline-none border-0 border-b transition-colors duration-150 placeholder:text-[var(--text-muted)]";
 
     const fieldStyle = (field: string) => ({
         borderColor: formErrors.some(e => e.field === field) ? "var(--danger-border)" : "var(--border-default)",
@@ -127,7 +125,6 @@ export default function RegisterPage() {
                     Back
                 </Link>
 
-                {/* Heading carries the hierarchy — no card around it */}
                 <h1 className="text-4xl font-semibold tracking-tight mb-2" style={{ color: "var(--text-primary)" }}>
                     Register for the event
                 </h1>

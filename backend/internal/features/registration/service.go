@@ -2,6 +2,7 @@ package projects
 
 import (
 	"context"
+	"errors"
 )
 
 type Service interface {
@@ -20,7 +21,15 @@ func NewService(repo Repository) *service {
 }
 
 func (srv *service) CreateRegistration(ctx context.Context, registration Registration) (Registration, error) {
-	return srv.repo.CreateRegistration(ctx, registration)
+	newRegistration, err := srv.repo.CreateRegistration(ctx, registration)
+	if err != nil {
+		if errors.Is(err, ErrRegistrationClosed) {
+			return newRegistration, ErrRegistrationClosed
+		}
+		return newRegistration, err
+	}
+
+	return newRegistration, nil
 }
 
 func (srv *service) GetRegistrationsByEventId(ctx context.Context, eventId string) ([]Registration, error) {

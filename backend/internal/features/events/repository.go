@@ -12,7 +12,7 @@ type Repository interface {
 	CreateSpeaker(ctx context.Context, speaker Speaker) (Speaker, error)
 	GetAllEvents(ctx context.Context) ([]Event, error)
 	GetEventBySlug(ctx context.Context, slug string) (Event, error)
-	GetEventNameByID(ctx context.Context, id string) (string, error)
+	GetEventNameByID(ctx context.Context, id string) (EventReg, error)
 }
 
 type repository struct {
@@ -115,6 +115,7 @@ func (repo *repository) GetAllEvents(ctx context.Context) ([]Event, error) {
 			e.description,
 			e.banner_image,
 			e.poster_image,
+			e.is_reg_closed,
 
 			COALESCE(
 				json_agg(
@@ -152,7 +153,8 @@ func (repo *repository) GetAllEvents(ctx context.Context) ([]Event, error) {
 			e.event_slug,
 			e.description,
 			e.banner_image,
-			e.poster_image
+			e.poster_image,
+			e.is_reg_closed
 	`
 
 	rows, err := repo.db.QueryContext(ctx, query)
@@ -175,6 +177,7 @@ func (repo *repository) GetAllEvents(ctx context.Context) ([]Event, error) {
 			&event.Description,
 			&event.BannerImage,
 			&event.PosterImage,
+			&event.IsRegClosed,
 			&schedulesJSON,
 			&speakersJSON,
 		)
@@ -212,6 +215,7 @@ func (repo *repository) GetEventBySlug(ctx context.Context, slug string) (Event,
 			e.description,
 			e.banner_image,
 			e.poster_image,
+			e.is_reg_closed,
 
 			COALESCE(
 				json_agg(
@@ -251,7 +255,8 @@ func (repo *repository) GetEventBySlug(ctx context.Context, slug string) (Event,
 			e.event_slug,
 			e.description,
 			e.banner_image,
-			e.poster_image
+			e.poster_image,
+			e.is_reg_closed
 	`
 
 	var event Event
@@ -269,6 +274,7 @@ func (repo *repository) GetEventBySlug(ctx context.Context, slug string) (Event,
 		&event.Description,
 		&event.BannerImage,
 		&event.PosterImage,
+		&event.IsRegClosed,
 		&schedulesJSON,
 		&speakersJSON,
 	)
@@ -287,25 +293,25 @@ func (repo *repository) GetEventBySlug(ctx context.Context, slug string) (Event,
 
 	return event, nil
 }
-func (repo *repository) GetEventNameByID(ctx context.Context, id string) (string, error) {
+func (repo *repository) GetEventNameByID(ctx context.Context, id string) (EventReg, error) {
 
 	query := `
-		SELECT event_name
+		SELECT event_name, is_reg_closed
 		FROM events
 		WHERE id = $1
 	`
 
-	var eventName string
+	var event EventReg
 
 	err := repo.db.QueryRowContext(
 		ctx,
 		query,
 		id,
-	).Scan(&eventName)
+	).Scan(&event.EventName, &event.IsRegClosed)
 
 	if err != nil {
-		return "", err
+		return EventReg{}, err
 	}
 
-	return eventName, nil
+	return event, nil
 }

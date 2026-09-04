@@ -5,6 +5,7 @@ CREATE TABLE events (
     description TEXT,
     banner_image TEXT,
     poster_image TEXT,
+    is_reg_closed Boolean NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

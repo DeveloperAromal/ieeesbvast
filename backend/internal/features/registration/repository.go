@@ -3,7 +3,10 @@ package projects
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
+
+var ErrRegistrationClosed = errors.New("registration is closed for this event")
 
 type Repository interface {
 	CreateRegistration(ctx context.Context, registration Registration) (Registration, error)
@@ -22,7 +25,34 @@ func NewRepository(db *sql.DB) *repository {
 
 func (repo *repository) CreateRegistration(ctx context.Context, registration Registration) (Registration, error) {
 
-	query := `
+	tx, err := repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		return registration, err
+	}
+	defer tx.Rollback()
+
+	var isRegClosed bool
+
+	checkQuery := `
+		SELECT is_reg_closed
+		FROM events
+		WHERE id = $1
+		FOR UPDATE
+	`
+
+	err = tx.QueryRowContext(ctx, checkQuery, registration.EventID).Scan(&isRegClosed)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return registration, errors.New("event not found")
+		}
+		return registration, err
+	}
+
+	if isRegClosed {
+		return registration, ErrRegistrationClosed
+	}
+
+	insertQuery := `
 		INSERT INTO registrations
 			(
 				event_id,
@@ -36,20 +66,25 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 		RETURNING id
 	`
 
-	err := repo.db.QueryRowContext(
+	err = tx.QueryRowContext(
 		ctx,
-		query,
+		insertQuery,
 		registration.EventID,
 		registration.FName,
 		registration.LName,
 		registration.Phonenumber,
 		registration.Email,
 		registration.CollageName,
-	).Scan(
-		&registration.ID,
-	)
+	).Scan(&registration.ID)
+	if err != nil {
+		return registration, err
+	}
 
-	return registration, err
+	if err := tx.Commit(); err != nil {
+		return registration, err
+	}
+
+	return registration, nil
 }
 
 func (repo *repository) GetRegistrationsByEventId(ctx context.Context, eventId string) ([]Registration, error) {

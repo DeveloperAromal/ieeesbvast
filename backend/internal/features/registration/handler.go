@@ -1,11 +1,14 @@
 package projects
 
 import (
+	"errors"
 	"net/http"
 
 	formatter "github.com/DeveloperAromal/ieeesbvast/pkg/formate"
 	"github.com/gin-gonic/gin"
 )
+
+const RegistrationClosedMsg = "Registration is closed for this event"
 
 type handler struct {
 	srv service
@@ -35,6 +38,16 @@ func (hdlr *handler) CreateNewRegistration(c *gin.Context) {
 
 	result, err := hdlr.srv.CreateRegistration(c.Request.Context(), registrationModel)
 	if err != nil {
+		if errors.Is(err, ErrRegistrationClosed) {
+			response.Error(
+				c.Writer,
+				false,
+				http.StatusForbidden,
+				RegistrationClosedMsg,
+			)
+			return
+		}
+
 		response.Error(
 			c.Writer,
 			false,

@@ -6,7 +6,7 @@ export interface Event {
     banner_image: string;
     poster_image: string;
     mode?: string;
-
+    is_reg_closed: boolean;
     schedules?: Schedule[];
     speakers?: Speaker[];
 }

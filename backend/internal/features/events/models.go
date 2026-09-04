@@ -7,16 +7,17 @@ type Event struct {
 	Description string `json:"description" db:"description"`
 	BannerImage string `json:"banner_image" db:"banner_image"`
 	PosterImage string `json:"poster_image" db:"poster_image"`
+	IsRegClosed bool   `json:"is_reg_closed" db:"is_reg_closed"`
 
 	Schedules []Schedule `json:"schedules,omitempty"`
 	Speakers  []Speaker  `json:"speakers,omitempty"`
 }
 
 type Schedule struct {
-	ID        string `json:"id" db:"id"`
-	EventID   string `json:"event_id" db:"event_id"`
-	Title     string `json:"title" db:"title"`
-	DateTime  string `json:"date_time" db:"date_time"`
+	ID       string `json:"id" db:"id"`
+	EventID  string `json:"event_id" db:"event_id"`
+	Title    string `json:"title" db:"title"`
+	DateTime string `json:"date_time" db:"date_time"`
 }
 
 type Speaker struct {
@@ -26,4 +27,9 @@ type Speaker struct {
 	Designation string `json:"designation" db:"designation"`
 	Company     string `json:"company" db:"company"`
 	Image       string `json:"image" db:"image"`
+}
+
+type EventReg struct {
+	EventName   string `json:"event_name" db:"event_name"`
+	IsRegClosed bool   `json:"is_reg_closed" db:"is_reg_closed"`
 }

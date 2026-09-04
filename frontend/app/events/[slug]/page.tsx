@@ -381,13 +381,22 @@ export default function EventDetailPage() {
                                 style={{ borderTop: "1px solid var(--border-default)" }}
                             />
 
-                            <Link
-                                href={`/register/${event.id}`}
-                                className="btn btn-primary flex w-full items-center justify-center gap-2 py-3 text-center font-semibold"
-                            >
-                                Register now
-                                <ArrowRight size={16} />
-                            </Link>
+                            {event.is_reg_closed ? (
+                                <button
+                                    disabled
+                                    className="btn btn-primary flex w-full cursor-not-allowed items-center justify-center gap-2 py-3 text-center font-semibold opacity-50"
+                                >
+                                    Registration Closed
+                                </button>
+                            ) : (
+                                <Link
+                                    href={`/register/${event.id}`}
+                                    className="btn btn-primary flex w-full items-center justify-center gap-2 py-3 text-center font-semibold"
+                                >
+                                    Register now
+                                    <ArrowRight size={16} />
+                                </Link>
+                            )}
 
                             <p className="mt-4 text-center text-xs" style={{ color: "var(--text-muted)" }}>
                                 No payment required
