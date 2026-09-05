@@ -38,7 +38,7 @@ export default function Login() {
             if (res.success) {
                 router.push("/events/dashboard")
             } else {
-                setError(res.message || "Couldn't log in. Check your details and try again.");
+                setError("Couldn't log in. Check your details and try again.");
             }
         } catch (err) {
             setError("Something went wrong. Try again.");
