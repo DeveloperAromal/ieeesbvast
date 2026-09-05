@@ -29,4 +29,6 @@ func (rtr *Router) Register(reg *gin.RouterGroup) {
 	handler := NewHandler(service)
 
 	reg.GET("/:eventID/create-event-users", handler.CreateEventUsers)
+	reg.POST("/login", handler.LoginUsers)
+	reg.GET("/me", handler.GetUserDetails)
 }

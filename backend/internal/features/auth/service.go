@@ -16,7 +16,7 @@ import (
 
 type Service interface {
 	CreateEventUser(ctx context.Context, eventID string) error
-	LoginUser(ctx context.Context, cred UserModel) (string, error)
+	LoginUser(ctx context.Context, cred LoginUserModel) (string, error)
 	FindUserSession(ctx context.Context, token string) (SessionResponse, error)
 }
 
@@ -98,7 +98,7 @@ func (srv *service) CreateEventUser(ctx context.Context, eventID string) error {
 
 }
 
-func (srv *service) LoginUser(ctx context.Context, cred UserModel) (string, error) {
+func (srv *service) LoginUser(ctx context.Context, cred LoginUserModel) (string, error) {
 
 	const sessionDuration = 7 * 24 * time.Hour
 
@@ -136,7 +136,7 @@ func (srv *service) LoginUser(ctx context.Context, cred UserModel) (string, erro
 	}
 
 	_, err = srv.repo.CreateSession(ctx, SessionModel{
-		ID:        user.ID,
+		UserID:    user.ID,
 		TokenHash: hashedToken,
 		ExpiredAt: time.Now().Add(sessionDuration),
 	})

@@ -2,7 +2,6 @@
 
 import { APIENDPOINT } from "@/config/Backend";
 import { useApiCall } from "@/hooks/useApiCall";
-import { useImageUrl } from "@/hooks/useImageUrl";
 import { BackgroundImage } from "@/components/BackgroundImage";
 import { ImageProxy } from "@/components/ImageProxy";
 import { Event } from "@/types/event_types";
@@ -100,7 +99,6 @@ export default function EventDetailPage() {
 
                 <div className="mt-6 grid grid-cols-1 gap-8 sm:mt-8 sm:gap-10 lg:grid-cols-[1fr_360px] lg:gap-12">
                     <div className="min-w-0 space-y-8 sm:space-y-10">
-                        {/* Title + meta */}
                         <div>
                             <span
                                 className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase"
@@ -276,7 +274,6 @@ export default function EventDetailPage() {
                             )}
                         </section>
 
-                        {/* Speakers */}
                         <section>
                             <h2
                                 className="text-lg font-semibold sm:text-xl"
@@ -424,14 +421,14 @@ export default function EventDetailPage() {
                 {event.is_reg_closed ? (
                     <button
                         disabled
-                        className="btn btn-primary flex flex-shrink-0 items-center gap-2 px-6 py-2.5 font-semibold cursor-not-allowed opacity-50"
+                        className="btn btn-primary flex shrink-0 items-center gap-2 px-6 py-2.5 font-semibold cursor-not-allowed opacity-50"
                     >
                         Registration Closed
                     </button>
                 ) : (
                     <Link
                         href={`/register/${event.id}`}
-                        className="btn btn-primary flex flex-shrink-0 items-center gap-2 px-6 py-2.5 font-semibold"
+                        className="btn btn-primary flex shrink-0 items-center gap-2 px-6 py-2.5 font-semibold"
                     >
                         Register now
                         <ArrowRight size={16} />

@@ -17,6 +17,10 @@
 },
 {
 "method": "GET",
+"path": "/api/v1/auth/me"
+},
+{
+"method": "GET",
 "path": "/api/v1/auth/:eventID/create-event-users"
 },
 {
@@ -42,6 +46,10 @@
 {
 "method": "POST",
 "path": "/api/v1/events/schedules"
+},
+{
+"method": "POST",
+"path": "/api/v1/auth/login"
 },
 {
 "method": "POST",

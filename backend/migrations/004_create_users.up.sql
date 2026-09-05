@@ -14,13 +14,8 @@ CREATE TABLE users (
 );
 
 CREATE TABLE sessions (
-	id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	token_hash VARCHAR(255) NOT NULL UNIQUE,
 	expires_at TIMESTAMP NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-	CONSTRAINT fk_session_user
-		FOREIGN KEY (id)
-		REFERENCES users(id)
-		ON DELETE CASCADE
 );

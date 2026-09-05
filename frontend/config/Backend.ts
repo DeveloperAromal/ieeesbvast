@@ -9,6 +9,9 @@ export const APIENDPOINT = {
   Root: `${baseUrl}/`,
   Health: `${baseUrl}/health`,
 
+  Login: `${baseUrl}/api/v1/auth/login`,
+  ME: `${baseUrl}/api/v1/auth/me`,
+
   GetAllEvents: `${baseUrl}/api/v1/events`,
   GetEventByID: (id: string) =>
     `${baseUrl}/api/v1/events/name/${id}`,

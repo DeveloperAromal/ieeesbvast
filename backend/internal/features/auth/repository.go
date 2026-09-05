@@ -91,7 +91,7 @@ func (repo *repository) LoginUser(ctx context.Context, email, password string) (
             name,
             email,
             password,
-            COALESCE(reg_id, '') AS reg_id
+            reg_id
         FROM users
         WHERE email = $1
     `
@@ -115,23 +115,24 @@ func (repo *repository) CreateSession(ctx context.Context, session SessionModel)
 	query := `
         INSERT INTO sessions
             (
-                id,
+				user_id,
                 token_hash,
                 expires_at
             )
-        VALUES ($1, $2, $3)
-        RETURNING id, token_hash, expires_at
+		VALUES ($1, $2, $3)
+		RETURNING id, user_id, token_hash, expires_at
     `
 
 	var returned SessionModel
 	err := repo.db.QueryRowContext(
 		ctx,
 		query,
-		session.ID,
+		session.UserID,
 		session.TokenHash,
 		session.ExpiredAt,
 	).Scan(
 		&returned.ID,
+		&returned.UserID,
 		&returned.TokenHash,
 		&returned.ExpiredAt,
 	)
@@ -143,23 +144,29 @@ func (repo *repository) CreateSession(ctx context.Context, session SessionModel)
 }
 
 func (repo *repository) FindUserSession(ctx context.Context, tokenHash string) (SessionResponse, error) {
-	var user UserModel
-	var session SessionExpireModel
 
+	var user User
+	var session SessionExpireModel
 	query := `
-        SELECT
-            u.id,
-            u.name,
-            u.email,
-            COALESCE(u.password, '') AS password,
-            COALESCE(u.reg_id, '') AS reg_id,
-            s.expires_at
-        FROM sessions s
-        INNER JOIN users u
-            ON s.id = u.id
-        WHERE s.token_hash = $1
-          AND s.expires_at > NOW()
-    `
+		SELECT
+			u.id,
+			u.name,
+			u.email,
+			COALESCE(u.password, '') AS password,
+			COALESCE(u.reg_id::text, '') AS reg_id,
+			COALESCE(e.event_name, '') AS event_name,
+			COALESCE(e.event_slug::text, '') AS event_slug,
+			s.expires_at
+		FROM sessions s
+		INNER JOIN users u
+			ON s.user_id = u.id
+		LEFT JOIN registrations r
+			ON r.id = u.reg_id
+		LEFT JOIN events e
+			ON e.id = r.event_id
+		WHERE s.token_hash = $1
+		AND s.expires_at > NOW()
+	`
 
 	err := repo.db.QueryRowContext(ctx, query, tokenHash).Scan(
 		&user.ID,
@@ -167,8 +174,11 @@ func (repo *repository) FindUserSession(ctx context.Context, tokenHash string) (
 		&user.Email,
 		&user.Password,
 		&user.RegistionID,
+		&user.EventName,
+		&user.EventSlug,
 		&session.ExpiresAt,
 	)
+
 	if err != nil {
 		return SessionResponse{}, err
 	}
