@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	formatter "github.com/DeveloperAromal/ieeesbvast/pkg/formate"
@@ -73,6 +74,7 @@ func (hdlr *handler) LoginUsers(c *gin.Context) {
 	}
 
 	c.SetSameSite(http.SameSiteLaxMode)
+	secureCookie := os.Getenv("COOKIE_SECURE") == "true"
 
 	c.SetCookie(
 		"session_token",
@@ -80,7 +82,7 @@ func (hdlr *handler) LoginUsers(c *gin.Context) {
 		int(sessionDuration.Seconds()),
 		"/",
 		"",
-		true,
+		secureCookie,
 		true,
 	)
 

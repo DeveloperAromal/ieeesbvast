@@ -68,6 +68,7 @@ func (srv *service) CreateEventUser(ctx context.Context, eventID string) error {
 		body, err := inviteTemplate.RenderInviteEmail(inviteTemplate.InviteData{
 			Name:       user.FName,
 			Password:   password,
+			Email:      user.Email,
 			InviteLink: "https://ieeesbvast.vercel.app/events/login",
 			Event:      user.EventName,
 		})
