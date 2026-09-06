@@ -2,6 +2,7 @@
 
 import { APIENDPOINT } from "@/config/Backend";
 import { useApiCall } from "@/hooks/useApiCall";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 interface Schedule {
@@ -36,6 +37,7 @@ export default function TimerPage() {
     const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
 
     const { makeApiCall } = useApiCall();
+    const router = useRouter();
 
     useEffect(() => {
         const fetchMe = async () => {
@@ -45,14 +47,19 @@ export default function TimerPage() {
                 if (res.success && res.data) {
                     const eventSlug = res.data.user?.event_slug ?? "";
                     setSlug(eventSlug);
+                    setLoading(false);
+                    return;
                 }
+
+                router.replace("/events/login");
             } catch (error) {
                 console.error("Error fetching user:", error);
+                router.replace("/events/login");
             }
         };
 
         fetchMe();
-    }, [makeApiCall]);
+    }, [makeApiCall, router]);
 
     useEffect(() => {
         if (!slug) return;
