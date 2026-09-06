@@ -21,6 +21,7 @@ type User struct {
 	Email       string `json:"email" db:"email"`
 	RegistionID string `json:"reg_id" db:"reg_id"`
 	Password    string `json:"password" db:"password"`
+	EventID     string `json:"event_id" db:"event_id"`
 	EventName   string `json:"event_name"`
 	EventSlug   string `json:"event_slug"`
 }

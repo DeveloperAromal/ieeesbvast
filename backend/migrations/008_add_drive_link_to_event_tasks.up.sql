@@ -1,0 +1,2 @@
+ALTER TABLE event_tasks
+ADD COLUMN drive_link TEXT NOT NULL DEFAULT '';

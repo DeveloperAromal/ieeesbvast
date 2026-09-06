@@ -154,6 +154,7 @@ func (repo *repository) FindUserSession(ctx context.Context, tokenHash string) (
 			u.email,
 			COALESCE(u.password, '') AS password,
 			COALESCE(u.reg_id::text, '') AS reg_id,
+			COALESCE(e.id::text, '') AS event_id,
 			COALESCE(e.event_name, '') AS event_name,
 			COALESCE(e.event_slug::text, '') AS event_slug,
 			s.expires_at
@@ -174,6 +175,7 @@ func (repo *repository) FindUserSession(ctx context.Context, tokenHash string) (
 		&user.Email,
 		&user.Password,
 		&user.RegistionID,
+		&user.EventID,
 		&user.EventName,
 		&user.EventSlug,
 		&session.ExpiresAt,

@@ -13,6 +13,7 @@ import (
 	authModule "github.com/DeveloperAromal/ieeesbvast/internal/features/auth"
 	eventModule "github.com/DeveloperAromal/ieeesbvast/internal/features/events"
 	regModule "github.com/DeveloperAromal/ieeesbvast/internal/features/registration"
+	submissionModule "github.com/DeveloperAromal/ieeesbvast/internal/features/submissions"
 	uploadModule "github.com/DeveloperAromal/ieeesbvast/internal/features/upload"
 
 	routers "github.com/DeveloperAromal/ieeesbvast/internal/interfaces"
@@ -69,11 +70,15 @@ func (app *application) mount() *gin.Engine {
 
 	api := r.Group("/api/v1")
 
+	registrationRepository := regModule.NewRepository(app.db)
+	authRouter := authModule.NewRouter(app.db, registrationRepository)
+
 	modules := []routers.RouterInterface{
-		authModule.NewRouter(app.db, regModule.NewRepository(app.db)),
+		authRouter,
 		regModule.NewRouter(app.db),
 		eventModule.NewRouter(app.db),
 		uploadModule.NewRouter(app.bucket),
+		submissionModule.NewRouter(app.db, authRouter.Service(), app.bucket),
 	}
 
 	for _, m := range modules {

@@ -14,9 +14,23 @@ export const APIENDPOINT = {
 
   GetAllEvents: `${baseUrl}/api/v1/events`,
   GetEventByID: (id: string) =>
-    `${baseUrl}/api/v1/events/name/${id}`,
+    `${baseUrl}/api/v1/events/by-id/${id}`,
   GetEventBySlug: (slug: string) =>
     `${baseUrl}/api/v1/events/${slug}`,
+  CreateEventTask: (eventId: string) =>
+    `${baseUrl}/api/v1/events/id/${eventId}/task`,
+  GetEventTask: (eventId: string) =>
+    `${baseUrl}/api/v1/events/id/${eventId}/task`,
+  UpdateEventTask: (eventId: string) =>
+    `${baseUrl}/api/v1/events/id/${eventId}/task`,
+  DeleteEventTask: (eventId: string) =>
+    `${baseUrl}/api/v1/events/id/${eventId}/task`,
+  GetSubmission: (eventId: string) =>
+    `${baseUrl}/api/v1/submissions/${eventId}`,
+  SaveSubmissionDraft: (eventId: string) =>
+    `${baseUrl}/api/v1/submissions/${eventId}/draft`,
+  SubmitSubmission: (eventId: string) =>
+    `${baseUrl}/api/v1/submissions/${eventId}/submit`,
   CreateEvent: `${baseUrl}/api/v1/events`,
   CreateSpeaker: `${baseUrl}/api/v1/events/speakers`,
   CreateSchedule: `${baseUrl}/api/v1/events/schedules`,

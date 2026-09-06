@@ -30,5 +30,10 @@ func (rtr *Router) Register(reg *gin.RouterGroup) {
 	reg.POST("/schedules", handler.CreateEventSchedule)
 	reg.GET("", handler.GetAllEvents)
 	reg.GET("/name/:id", handler.GetEventNameByID)
+	reg.GET("/by-id/:id", handler.GetEventByID)
+	reg.POST("/id/:eventId/task", handler.CreateEventTask)
+	reg.GET("/id/:eventId/task", handler.GetEventTask)
+	reg.PUT("/id/:eventId/task", handler.UpdateEventTask)
+	reg.DELETE("/id/:eventId/task", handler.DeleteEventTask)
 	reg.GET("/:slug", handler.GetEventBySlug)
 }

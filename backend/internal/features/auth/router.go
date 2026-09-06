@@ -19,6 +19,10 @@ func NewRouter(db *sql.DB, regModule regUser.Repository) *Router {
 	}
 }
 
+func (rtr *Router) Service() Service {
+	return NewService(NewRepository(rtr.db), rtr.regModule)
+}
+
 func (rtr *Router) BasePath() string {
 	return "/auth"
 }

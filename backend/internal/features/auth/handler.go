@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	formatter "github.com/DeveloperAromal/ieeesbvast/pkg/formate"
@@ -72,7 +73,12 @@ func (hdlr *handler) LoginUsers(c *gin.Context) {
 		return
 	}
 
-	c.SetSameSite(http.SameSiteNoneMode)
+	secureCookie := c.Request.TLS != nil || isHTTPSRequest(c.Request)
+	if secureCookie {
+		c.SetSameSite(http.SameSiteNoneMode)
+	} else {
+		c.SetSameSite(http.SameSiteLaxMode)
+	}
 
 	c.SetCookie(
 		"session_token",
@@ -80,7 +86,7 @@ func (hdlr *handler) LoginUsers(c *gin.Context) {
 		int(sessionDuration.Seconds()),
 		"/",
 		"",
-		true,
+		secureCookie,
 		true,
 	)
 
@@ -91,6 +97,20 @@ func (hdlr *handler) LoginUsers(c *gin.Context) {
 		nil,
 		"Successfully logged in",
 	)
+}
+
+func isHTTPSRequest(request *http.Request) bool {
+	forwardedProto := strings.TrimSpace(strings.Split(request.Header.Get("X-Forwarded-Proto"), ",")[0])
+	if strings.EqualFold(forwardedProto, "https") {
+		return true
+	}
+
+	if strings.Contains(strings.ToLower(request.Header.Get("Forwarded")), "proto=https") {
+		return true
+	}
+
+	origin := strings.TrimSpace(strings.Split(request.Header.Get("Origin"), ",")[0])
+	return strings.HasPrefix(strings.ToLower(origin), "https://")
 }
 
 func (hdlr *handler) GetUserDetails(c *gin.Context) {
