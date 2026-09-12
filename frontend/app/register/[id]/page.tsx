@@ -5,13 +5,16 @@ import { useApiCall } from "@/hooks/useApiCall";
 import { AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { RegistrationPayload } from "@/types/api_types";
 
 interface FormError {
     field: string;
     message: string;
 }
+
+const semesterOptions = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"];
+const branchOptions = ["CSE", "CIVIL", "MECH", "ECE", "AI/ML", "CYBERSECURITY"];
 
 export default function RegisterPage() {
     const { id } = useParams<{ id: string }>();
@@ -29,14 +32,10 @@ export default function RegisterPage() {
         phonenumber: "",
         email: "",
         collage_name: "",
-        event_id: id || "",
+        semester: "",
+        branch: "",
+        event_id: id ?? "",
     });
-
-    useEffect(() => {
-        if (id) {
-            setFormData(prev => ({ ...prev, event_id: id }));
-        }
-    }, [id]);
 
     const validateForm = (): boolean => {
         const errors: FormError[] = [];
@@ -50,12 +49,14 @@ export default function RegisterPage() {
         }
         if (!formData.phonenumber.trim()) errors.push({ field: "phonenumber", message: "Phone required" });
         if (!formData.collage_name.trim()) errors.push({ field: "collage_name", message: "College required" });
+        if (!formData.semester.trim()) errors.push({ field: "semester", message: "Semester required" });
+        if (!formData.branch.trim()) errors.push({ field: "branch", message: "Branch required" });
 
         setFormErrors(errors);
         return errors.length === 0;
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setFormErrors(prev => prev.filter(err => err.field !== name));
@@ -84,7 +85,7 @@ export default function RegisterPage() {
             } else {
                 setRegistrationError(result.message);
             }
-        } catch (error) {
+        } catch {
             setRegistrationError("An error occurred");
         } finally {
             setRegistrationLoading(false);
@@ -115,7 +116,6 @@ export default function RegisterPage() {
     return (
         <main className="min-h-screen" style={{ background: "var(--bg-page)" }}>
             <div className="max-w-lg mx-auto px-6 pt-10 pb-24">
-                {/* Back link — no border, just breathing room */}
                 <Link
                     href="/events"
                     className="inline-flex items-center gap-2 text-sm font-medium mb-16"
@@ -129,7 +129,7 @@ export default function RegisterPage() {
                     Register for the event
                 </h1>
                 <p className="text-base mb-12" style={{ color: "var(--text-muted)" }}>
-                    A few details and you're in.
+                    A few details and you are in.
                 </p>
 
                 <form onSubmit={handleSubmitRegistration} className="space-y-10">
@@ -145,7 +145,7 @@ export default function RegisterPage() {
 
                     {registrationError && (
                         <div className="flex items-start gap-3 text-sm" style={{ color: "var(--danger-text)" }}>
-                            <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
                             <p>{registrationError}</p>
                         </div>
                     )}
@@ -232,6 +232,46 @@ export default function RegisterPage() {
                             {formErrors.find(e => e.field === "collage_name") && (
                                 <p className="text-xs mt-1.5" style={{ color: "var(--danger-text)" }}>
                                     {formErrors.find(e => e.field === "collage_name")?.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <select
+                                name="semester"
+                                value={formData.semester}
+                                onChange={handleInputChange}
+                                className={fieldClass}
+                                style={fieldStyle("semester")}
+                            >
+                                <option value="">Semester</option>
+                                {semesterOptions.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                            {formErrors.find(e => e.field === "semester") && (
+                                <p className="text-xs mt-1.5" style={{ color: "var(--danger-text)" }}>
+                                    {formErrors.find(e => e.field === "semester")?.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <select
+                                name="branch"
+                                value={formData.branch}
+                                onChange={handleInputChange}
+                                className={fieldClass}
+                                style={fieldStyle("branch")}
+                            >
+                                <option value="">Branch</option>
+                                {branchOptions.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                            {formErrors.find(e => e.field === "branch") && (
+                                <p className="text-xs mt-1.5" style={{ color: "var(--danger-text)" }}>
+                                    {formErrors.find(e => e.field === "branch")?.message}
                                 </p>
                             )}
                         </div>

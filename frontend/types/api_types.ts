@@ -13,5 +13,7 @@ export interface RegistrationPayload {
     phonenumber: string;
     email: string;
     collage_name: string;
+    semester: string;
+    branch: string;
     event_id: string;
 }

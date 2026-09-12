@@ -77,7 +77,7 @@ export default function Registration() {
                             type="email"
                             autoComplete="email"
                             required
-                            placeholder="you@company.com"
+                            placeholder="you@gmail.com"
                             className="input w-full"
                         />
                     </div>

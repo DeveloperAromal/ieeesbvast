@@ -18,6 +18,9 @@ interface FormError {
     message: string;
 }
 
+const semesterOptions = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"];
+const branchOptions = ["CSE", "CIVIL"];
+
 export function RegistrationModal({
     isOpen,
     eventId,
@@ -36,6 +39,8 @@ export function RegistrationModal({
         phonenumber: "",
         email: "",
         collage_name: "",
+        semester: "",
+        branch: "",
         event_id: eventId,
     });
 
@@ -59,12 +64,18 @@ export function RegistrationModal({
         if (!formData.collage_name.trim()) {
             errors.push({ field: "collage_name", message: "College name is required" });
         }
+        if (!formData.semester.trim()) {
+            errors.push({ field: "semester", message: "Semester is required" });
+        }
+        if (!formData.branch.trim()) {
+            errors.push({ field: "branch", message: "Branch is required" });
+        }
 
         setFormErrors(errors);
         return errors.length === 0;
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
@@ -102,6 +113,8 @@ export function RegistrationModal({
                     phonenumber: "",
                     email: "",
                     collage_name: "",
+                    semester: "",
+                    branch: "",
                     event_id: eventId,
                 });
                 setTimeout(() => {
@@ -111,7 +124,7 @@ export function RegistrationModal({
             } else {
                 setRegistrationError(result.message || "Failed to register for the event");
             }
-        } catch (error) {
+        } catch {
             setRegistrationError("An unexpected error occurred during registration");
         } finally {
             setRegistrationLoading(false);
@@ -288,6 +301,60 @@ export function RegistrationModal({
                                 {formErrors.find(e => e.field === "collage_name")?.message}
                             </p>
                         )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2"
+                                style={{ color: "var(--text-secondary)" }}>
+                                Semester <span style={{ color: "var(--color-accent)" }}>*</span>
+                            </label>
+                            <select
+                                name="semester"
+                                value={formData.semester}
+                                onChange={handleInputChange}
+                                className="input w-full"
+                                style={{
+                                    borderColor: formErrors.some(e => e.field === "semester") ? "var(--danger-border)" : "var(--border-default)"
+                                }}
+                            >
+                                <option value="">Select</option>
+                                {semesterOptions.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                            {formErrors.find(e => e.field === "semester") && (
+                                <p className="mt-1 text-xs" style={{ color: "var(--danger-text)" }}>
+                                    {formErrors.find(e => e.field === "semester")?.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2"
+                                style={{ color: "var(--text-secondary)" }}>
+                                Branch <span style={{ color: "var(--color-accent)" }}>*</span>
+                            </label>
+                            <select
+                                name="branch"
+                                value={formData.branch}
+                                onChange={handleInputChange}
+                                className="input w-full"
+                                style={{
+                                    borderColor: formErrors.some(e => e.field === "branch") ? "var(--danger-border)" : "var(--border-default)"
+                                }}
+                            >
+                                <option value="">Select</option>
+                                {branchOptions.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                            {formErrors.find(e => e.field === "branch") && (
+                                <p className="mt-1 text-xs" style={{ color: "var(--danger-text)" }}>
+                                    {formErrors.find(e => e.field === "branch")?.message}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex gap-3 pt-4">

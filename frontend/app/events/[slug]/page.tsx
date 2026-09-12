@@ -73,7 +73,9 @@ export default function EventDetailPage() {
         );
     }
 
-    const firstSchedule = event?.schedules?.[0];
+    const scheduleLength = event?.schedules?.length ?? 0;
+
+    const lastSchedule = event?.schedules?.[scheduleLength - 1]
 
     return (
         <main
@@ -126,14 +128,14 @@ export default function EventDetailPage() {
                                     <span>{event?.mode || "Online"}</span>
                                 </div>
 
-                                {firstSchedule && (
+                                {lastSchedule && (
                                     <div
                                         className="flex items-center gap-2"
                                         style={{ color: "var(--text-secondary)" }}
                                     >
                                         <Calendar size={17} className="flex-shrink-0" />
                                         <span>
-                                            {new Date(firstSchedule.date_time)
+                                            {new Date(lastSchedule.date_time)
                                                 .toLocaleDateString('en-US', {
                                                     year: 'numeric',
                                                     month: 'long',
@@ -143,14 +145,14 @@ export default function EventDetailPage() {
                                     </div>
                                 )}
 
-                                {firstSchedule && (
+                                {lastSchedule && (
                                     <div
                                         className="flex items-center gap-2"
                                         style={{ color: "var(--text-secondary)" }}
                                     >
                                         <Clock size={17} className="flex-shrink-0" />
                                         <span>
-                                            {new Date(firstSchedule.date_time)
+                                            {new Date(lastSchedule.date_time)
                                                 .toLocaleTimeString('en-US', {
                                                     hour: '2-digit',
                                                     minute: '2-digit',

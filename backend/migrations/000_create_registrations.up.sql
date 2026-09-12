@@ -8,6 +8,8 @@ CREATE TABLE registrations (
     phonenumber VARCHAR(20) NOT NULL,
     email VARCHAR(255) NOT NULL,
     collage_name VARCHAR(255) NOT NULL,
+    semester VARCHAR(10) NOT NULL DEFAULT 'S1',
+    branch VARCHAR(20) NOT NULL DEFAULT 'CSE',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

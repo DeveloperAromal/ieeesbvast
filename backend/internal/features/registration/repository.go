@@ -60,9 +60,11 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 				lname,
 				phonenumber,
 				email,
-				collage_name
+				collage_name,
+				semester,
+				branch
 			)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 	`
 
@@ -75,6 +77,8 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 		registration.Phonenumber,
 		registration.Email,
 		registration.CollageName,
+		registration.Semester,
+		registration.Branch,
 	).Scan(&registration.ID)
 	if err != nil {
 		return registration, err
@@ -98,7 +102,9 @@ func (repo *repository) GetRegistrationsByEventId(ctx context.Context, eventId s
 			r.lname,
 			r.phonenumber,
 			r.email,
-			r.collage_name
+			r.collage_name,
+			r.semester,
+			r.branch
 		FROM registrations r
 		JOIN events e ON e.id = r.event_id
 		WHERE r.event_id = $1
@@ -125,6 +131,8 @@ func (repo *repository) GetRegistrationsByEventId(ctx context.Context, eventId s
 			&registration.Phonenumber,
 			&registration.Email,
 			&registration.CollageName,
+			&registration.Semester,
+			&registration.Branch,
 		)
 
 		if err != nil {

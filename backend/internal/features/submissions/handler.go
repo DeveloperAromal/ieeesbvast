@@ -3,6 +3,7 @@ package submissions
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"mime/multipart"
 	"net/http"
 
@@ -30,7 +31,16 @@ func (h *handler) userID(c *gin.Context) (string, bool) {
 	}
 	session, err := h.auth.FindUserSession(c.Request.Context(), token)
 	if err != nil {
-		response.Error(c.Writer, false, http.StatusUnauthorized, "Authentication required")
+		if errors.Is(err, sql.ErrNoRows) {
+			response.Error(c.Writer, false, http.StatusUnauthorized, "Session expired or invalid")
+			return "", false
+		}
+		log.Printf("submission authentication lookup failed: %v", err)
+		response.Error(c.Writer, false, http.StatusInternalServerError, "Authentication service unavailable")
+		return "", false
+	}
+	if session.User.ID == "" {
+		response.Error(c.Writer, false, http.StatusUnauthorized, "Session user not found")
 		return "", false
 	}
 	return session.User.ID, true

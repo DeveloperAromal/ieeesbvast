@@ -522,6 +522,17 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+select.input,
+select.input option {
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+select.input option {
+  background: var(--bg-surface-raised);
+  color: var(--text-primary);
+}
+
 .input::placeholder {
   color: var(--input-placeholder);
 }

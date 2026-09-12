@@ -36,11 +36,16 @@ export default function Login() {
             )
 
             if (res.success) {
-                router.push("/events/dashboard")
+                const session = await makeApiCall("GET", APIENDPOINT.ME);
+                if (session.success && session.data) {
+                    router.replace("/events/dashboard");
+                } else {
+                    setError("Login succeeded, but the session was not saved. Please try again.");
+                }
             } else {
                 setError("Couldn't log in. Check your details and try again.");
             }
-        } catch (err) {
+        } catch {
             setError("Something went wrong. Try again.");
         } finally {
             setLoading(false);
