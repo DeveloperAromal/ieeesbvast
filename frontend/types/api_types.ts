@@ -16,4 +16,12 @@ export interface RegistrationPayload {
     semester: string;
     branch: string;
     event_id: string;
+    team_name: string;
+    team_size: number;
+    team_members: TeamMemberPayload[];
+}
+
+export interface TeamMemberPayload {
+    name: string;
+    email: string;
 }

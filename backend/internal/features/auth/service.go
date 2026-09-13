@@ -18,6 +18,7 @@ type Service interface {
 	CreateEventUser(ctx context.Context, eventID string) error
 	LoginUser(ctx context.Context, cred LoginUserModel) (string, error)
 	FindUserSession(ctx context.Context, token string) (SessionResponse, error)
+	BlackoutLogin(ctx context.Context, cred BlackoutLoginRequest) (string, BlackoutLoginResponse, error)
 }
 
 type service struct {
@@ -154,5 +155,60 @@ func (srv *service) FindUserSession(ctx context.Context, token string) (SessionR
 	}
 
 	return srv.repo.FindUserSession(ctx, hashedToken)
+
+}
+
+func (srv *service) BlackoutLogin(ctx context.Context, cred BlackoutLoginRequest) (string, BlackoutLoginResponse, error) {
+
+	const sessionDuration = 7 * 24 * time.Hour
+
+	emailExists, err := srv.repo.EmailExists(ctx, cred.Email)
+	if err != nil {
+		return "", BlackoutLoginResponse{}, err
+	}
+
+	if !emailExists {
+		return "", BlackoutLoginResponse{}, errors.New("Invalid email or password")
+	}
+
+	user, err := srv.repo.LoginUser(ctx, cred.Email, cred.Password)
+	if err != nil {
+		return "", BlackoutLoginResponse{}, err
+	}
+
+	comp, err := hashing.NewAlgo().ComparePasswordHash(cred.Password, user.Password)
+	if err != nil {
+		return "", BlackoutLoginResponse{}, err
+	}
+
+	if !comp {
+		return "", BlackoutLoginResponse{}, errors.New("Invalid email or password")
+	}
+
+	token, err := hashing.NewAlgo().RandomToken()
+	if err != nil {
+		return "", BlackoutLoginResponse{}, err
+	}
+
+	hashedToken, err := hashing.NewAlgo().CreateSHA(token)
+	if err != nil {
+		return "", BlackoutLoginResponse{}, err
+	}
+
+	_, err = srv.repo.CreateSession(ctx, SessionModel{
+		UserID:    user.ID,
+		TokenHash: hashedToken,
+		ExpiredAt: time.Now().Add(sessionDuration),
+	})
+
+	if err != nil {
+		return "", BlackoutLoginResponse{}, err
+	}
+
+	return token, BlackoutLoginResponse{
+		UserID: user.ID,
+		Name:   user.Name,
+		Email:  user.Email,
+	}, nil
 
 }

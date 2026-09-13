@@ -11,6 +11,7 @@ export const APIENDPOINT = {
 
   Login: `${baseUrl}/api/v1/auth/login`,
   ME: `${baseUrl}/api/v1/auth/me`,
+  BlackoutLogin: `${baseUrl}/api/v1/auth/blackout/login`,
 
   GetAllEvents: `${baseUrl}/api/v1/events`,
   GetEventByID: (id: string) =>
@@ -38,6 +39,12 @@ export const APIENDPOINT = {
   CreateRegistration: `${baseUrl}/api/v1/registrations`,
   GetRegistrationsByEventId: (eventId: string) =>
     `${baseUrl}/api/v1/registrations/${eventId}`,
+
+  GetGameByID: (gameId: string) => `${baseUrl}/api/v1/game/${gameId}`,
+  SubmitGameAnswer: `${baseUrl}/api/v1/game/answer`,
+  RequestGameHint: `${baseUrl}/api/v1/game/hint`,
+  GetGameLeaderboard: (gameId: string) => `${baseUrl}/api/v1/game/${gameId}/leaderboard`,
+  BlackoutGame: `${baseUrl}/api/v1/game/blackout/game`,
 
   UploadFile: `${baseUrl}/api/v1/upload`,
   GetImageUrl: (key: string) =>

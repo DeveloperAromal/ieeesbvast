@@ -47,6 +47,27 @@ func (hdlr *handler) CreateNewRegistration(c *gin.Context) {
 			)
 			return
 		}
+		if errors.Is(err, ErrInvalidTeamSize) {
+			response.Error(
+				c.Writer,
+				false,
+				http.StatusBadRequest,
+				err.Error(),
+			)
+			return
+		}
+		if errors.Is(err, ErrInvalidTeamMembers) {
+			response.Error(c.Writer, false, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, ErrTeamNameRequired) {
+			response.Error(c.Writer, false, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, ErrInvalidEventID) {
+			response.Error(c.Writer, false, http.StatusBadRequest, err.Error())
+			return
+		}
 
 		response.Error(
 			c.Writer,

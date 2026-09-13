@@ -25,6 +25,7 @@ type User struct {
 	EventName   string `json:"event_name"`
 	EventSlug   string `json:"event_slug"`
 }
+
 type SessionModel struct {
 	ID        string    `json:"id" db:"id"`
 	UserID    string    `json:"user_id" db:"user_id"`
@@ -40,4 +41,17 @@ type SessionResponse struct {
 	Authenticated bool               `json:"authenticated"`
 	User          User               `json:"user"`
 	Session       SessionExpireModel `json:"session"`
+}
+
+type BlackoutLoginRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type BlackoutLoginResponse struct {
+	UserID       string `json:"user_id"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	SessionToken string `json:"session_token"`
+	Message      string `json:"message"`
 }

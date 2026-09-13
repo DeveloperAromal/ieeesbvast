@@ -6,7 +6,7 @@ import { AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { RegistrationPayload } from "@/types/api_types";
+import type { RegistrationPayload, TeamMemberPayload } from "@/types/api_types";
 
 interface FormError {
     field: string;
@@ -35,6 +35,9 @@ export default function RegisterPage() {
         semester: "",
         branch: "",
         event_id: id ?? "",
+        team_name: "",
+        team_size: 1,
+        team_members: [],
     });
 
     const validateForm = (): boolean => {
@@ -51,6 +54,11 @@ export default function RegisterPage() {
         if (!formData.collage_name.trim()) errors.push({ field: "collage_name", message: "College required" });
         if (!formData.semester.trim()) errors.push({ field: "semester", message: "Semester required" });
         if (!formData.branch.trim()) errors.push({ field: "branch", message: "Branch required" });
+        if (!formData.team_name.trim()) errors.push({ field: "team_name", message: "Team name required" });
+        formData.team_members.forEach((member, index) => {
+            if (!member.name.trim()) errors.push({ field: `member-${index}-name`, message: "Member name required" });
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) errors.push({ field: `member-${index}-email`, message: "Valid member email required" });
+        });
 
         setFormErrors(errors);
         return errors.length === 0;
@@ -62,6 +70,23 @@ export default function RegisterPage() {
         setFormErrors(prev => prev.filter(err => err.field !== name));
     };
 
+    const updateTeamSize = (teamSize: number) => {
+        setFormData(prev => ({
+            ...prev,
+            team_size: teamSize,
+            team_members: Array.from({ length: teamSize - 1 }, (_, index) => prev.team_members[index] ?? { name: "", email: "" }),
+        }));
+        setFormErrors(prev => prev.filter(error => !error.field.startsWith("member-") && error.field !== "team_name"));
+    };
+
+    const updateTeamMember = (index: number, field: keyof TeamMemberPayload, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            team_members: prev.team_members.map((member, memberIndex) => memberIndex === index ? { ...member, [field]: value } : member),
+        }));
+        setFormErrors(prev => prev.filter(error => error.field !== `member-${index}-${field}`));
+    };
+
     const handleSubmitRegistration = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setRegistrationError(null);
@@ -69,7 +94,8 @@ export default function RegisterPage() {
 
         if (!validateForm()) return;
 
-        if (!formData.event_id || formData.event_id === "") {
+        const eventId = Array.isArray(id) ? id[0] : id;
+        if (!eventId) {
             setRegistrationError("Event ID is missing. Please go back and try again.");
             return;
         }
@@ -77,7 +103,10 @@ export default function RegisterPage() {
         setRegistrationLoading(true);
 
         try {
-            const result = await makeApiCall("POST", APIENDPOINT.CreateRegistration, formData);
+            const result = await makeApiCall("POST", APIENDPOINT.CreateRegistration, {
+                ...formData,
+                event_id: eventId,
+            });
 
             if (result.success) {
                 setRegistrationSuccess(true);
@@ -276,6 +305,33 @@ export default function RegisterPage() {
                             )}
                         </div>
                     </div>
+
+                    <section className="space-y-6 border-t pt-8" style={{ borderColor: "var(--border-default)" }}>
+                        <div>
+                            <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Team details</h2>
+                            <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>You are the team captain. Add the rest of your team below.</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div>
+                                <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Team name</label>
+                                <input name="team_name" value={formData.team_name} onChange={handleInputChange} placeholder="Byte Benders" className={fieldClass} style={fieldStyle("team_name")} />
+                                {formErrors.find(error => error.field === "team_name") && <p className="mt-1.5 text-xs" style={{ color: "var(--danger-text)" }}>Team name required</p>}
+                            </div>
+                            <div>
+                                <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Team size</label>
+                                <select value={formData.team_size} onChange={(e) => updateTeamSize(Number(e.target.value))} className={fieldClass} style={fieldStyle("team_size")}>
+                                    {[1, 2, 3, 4].map(size => <option key={size} value={size}>{size} {size === 1 ? "member" : "members"}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        {formData.team_members.map((member, index) => <div key={index} className="rounded-lg border p-4" style={{ borderColor: "var(--border-default)", background: "var(--bg-surface)" }}>
+                            <p className="mb-4 text-sm font-medium" style={{ color: "var(--text-primary)" }}>Team member {index + 2}</p>
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                <div><input value={member.name} onChange={(e) => updateTeamMember(index, "name", e.target.value)} placeholder="Full name" className={fieldClass} style={fieldStyle(`member-${index}-name`)} />{formErrors.find(error => error.field === `member-${index}-name`) && <p className="mt-1.5 text-xs" style={{ color: "var(--danger-text)" }}>Member name required</p>}</div>
+                                <div><input type="email" value={member.email} onChange={(e) => updateTeamMember(index, "email", e.target.value)} placeholder="Email address" className={fieldClass} style={fieldStyle(`member-${index}-email`)} />{formErrors.find(error => error.field === `member-${index}-email`) && <p className="mt-1.5 text-xs" style={{ color: "var(--danger-text)" }}>Valid email required</p>}</div>
+                            </div>
+                        </div>)}
+                    </section>
 
                     <button
                         type="submit"

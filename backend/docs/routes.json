@@ -25,6 +25,18 @@
 },
 {
 "method": "GET",
+"path": "/api/v1/game/blackout/game"
+},
+{
+"method": "GET",
+"path": "/api/v1/game/:id"
+},
+{
+"method": "GET",
+"path": "/api/v1/game/:id/leaderboard"
+},
+{
+"method": "GET",
 "path": "/api/v1/auth/me"
 },
 {
@@ -65,15 +77,31 @@
 },
 {
 "method": "POST",
+"path": "/api/v1/game"
+},
+{
+"method": "POST",
+"path": "/api/v1/game/answer"
+},
+{
+"method": "POST",
+"path": "/api/v1/game/hint"
+},
+{
+"method": "POST",
+"path": "/api/v1/auth/login"
+},
+{
+"method": "POST",
+"path": "/api/v1/auth/blackout/login"
+},
+{
+"method": "POST",
 "path": "/api/v1/submissions/:eventId/draft"
 },
 {
 "method": "POST",
 "path": "/api/v1/submissions/:eventId/submit"
-},
-{
-"method": "POST",
-"path": "/api/v1/auth/login"
 },
 {
 "method": "POST",

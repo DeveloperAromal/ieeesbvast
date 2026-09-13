@@ -156,3 +156,57 @@ func (hdlr *handler) GetUserDetails(c *gin.Context) {
 		"Successfully fetched user",
 	)
 }
+
+func (hdlr *handler) BlackoutLogin(c *gin.Context) {
+	var cred BlackoutLoginRequest
+	const sessionDuration = 7 * 24 * time.Hour
+
+	if err := c.ShouldBindJSON(&cred); err != nil {
+		response.Error(
+			c.Writer,
+			false,
+			http.StatusBadRequest,
+			"Bad request",
+		)
+		return
+	}
+
+	token, userResp, err := hdlr.srv.BlackoutLogin(c.Request.Context(), cred)
+	if err != nil {
+		response.Error(
+			c.Writer,
+			false,
+			http.StatusUnauthorized,
+			"Invalid email or password",
+		)
+		return
+	}
+
+	secureCookie := c.Request.TLS != nil || isHTTPSRequest(c.Request)
+	if secureCookie {
+		c.SetSameSite(http.SameSiteNoneMode)
+	} else {
+		c.SetSameSite(http.SameSiteLaxMode)
+	}
+
+	c.SetCookie(
+		"session_token",
+		token,
+		int(sessionDuration.Seconds()),
+		"/",
+		"",
+		secureCookie,
+		true,
+	)
+
+	userResp.SessionToken = token
+	userResp.Message = "Successfully authenticated for blackout"
+
+	response.Success(
+		c.Writer,
+		true,
+		http.StatusOK,
+		userResp,
+		"Successfully logged in",
+	)
+}

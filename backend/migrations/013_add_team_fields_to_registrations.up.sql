@@ -1,0 +1,7 @@
+ALTER TABLE registrations
+    ADD COLUMN IF NOT EXISTS team_name VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS team_size SMALLINT NOT NULL DEFAULT 1;
+
+ALTER TABLE registrations
+    ADD CONSTRAINT IF NOT EXISTS chk_registration_team_size
+    CHECK (team_size BETWEEN 1 AND 4);

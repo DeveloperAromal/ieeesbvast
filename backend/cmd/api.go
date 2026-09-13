@@ -12,6 +12,7 @@ import (
 
 	authModule "github.com/DeveloperAromal/ieeesbvast/internal/features/auth"
 	eventModule "github.com/DeveloperAromal/ieeesbvast/internal/features/events"
+	gameModule "github.com/DeveloperAromal/ieeesbvast/internal/features/game"
 	regModule "github.com/DeveloperAromal/ieeesbvast/internal/features/registration"
 	submissionModule "github.com/DeveloperAromal/ieeesbvast/internal/features/submissions"
 	uploadModule "github.com/DeveloperAromal/ieeesbvast/internal/features/upload"
@@ -77,6 +78,7 @@ func (app *application) mount() *gin.Engine {
 		authRouter,
 		regModule.NewRouter(app.db),
 		eventModule.NewRouter(app.db),
+		gameModule.NewRouter(app.db),
 		uploadModule.NewRouter(app.bucket),
 		submissionModule.NewRouter(app.db, authRouter.Service(), app.bucket),
 	}

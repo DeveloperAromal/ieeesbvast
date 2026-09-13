@@ -35,4 +35,5 @@ func (rtr *Router) Register(reg *gin.RouterGroup) {
 	reg.GET("/:eventID/create-event-users", handler.CreateEventUsers)
 	reg.POST("/login", handler.LoginUsers)
 	reg.GET("/me", handler.GetUserDetails)
+	reg.POST("/blackout/login", handler.BlackoutLogin)
 }
