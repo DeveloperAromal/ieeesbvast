@@ -369,13 +369,13 @@ func (repo *repository) GetLeaderboard(ctx context.Context, gameID string) ([]Le
 	query := `
 		SELECT
 			s.team_registration_id,
-			r.team_name,
+			COALESCE(r.team_name, 'Team'),
 			s.current_stage,
 			s.score,
 			s.penalty_minutes,
 			s.penalty_points
 		FROM team_game_sessions s
-		JOIN registrations r ON r.id = s.team_registration_id
+		LEFT JOIN registrations r ON r.id = s.team_registration_id
 		WHERE s.game_id = $1
 		ORDER BY s.score DESC, s.current_stage DESC, s.updated_at ASC
 	`
