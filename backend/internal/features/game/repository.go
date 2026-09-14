@@ -13,6 +13,7 @@ var ErrRegistrationClosed = errors.New("registration is closed for this event")
 var ErrGameNotFound = errors.New("game not found")
 var ErrInvalidAnswer = errors.New("invalid answer")
 var ErrInvalidGameState = errors.New("this action is not available in the current maze state")
+var ErrSessionExpired = errors.New("session expired or invalid")
 
 type Repository interface {
 	Create(ctx context.Context, game Game) (Game, error)
@@ -416,6 +417,14 @@ func (repo *repository) GetBlackoutGameData(ctx context.Context, sessionToken st
 		return BlackoutGameData{}, err
 	}
 
+	var validSession bool
+	if err := repo.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM sessions WHERE token_hash = $1 AND expires_at > NOW())`, hashedToken).Scan(&validSession); err != nil {
+		return BlackoutGameData{}, err
+	}
+	if !validSession {
+		return BlackoutGameData{}, ErrSessionExpired
+	}
+
 	// First, get user and game info
 	gameQuery := `
 		SELECT
@@ -455,7 +464,7 @@ func (repo *repository) GetBlackoutGameData(ctx context.Context, sessionToken st
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return BlackoutGameData{}, errors.New("session expired or no game configured")
+			return BlackoutGameData{}, ErrGameNotFound
 		}
 		return BlackoutGameData{}, err
 	}

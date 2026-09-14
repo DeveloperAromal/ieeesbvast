@@ -33,13 +33,16 @@ export default function BlackoutLoginPage() {
       password: password,
     });
 
-    if (res.success && res.data) {
-      // Session token is set via cookie by the API
+    const sessionToken = (res.data as { session_token?: string } | null)?.session_token;
+    if (res.success && sessionToken) {
+      // Cookies remain the primary session mechanism. Keep a tab-scoped
+      // fallback for Safari, which can reject cross-site cookies.
+      window.sessionStorage.setItem("session_token", sessionToken);
       setEmail("");
       setPassword("");
       router.push("/blackout/game");
     } else {
-      setError(res.message || "Invalid credentials. Please try again.");
+      setError(res.message || "Unable to start a session. Please try again.");
     }
 
     setLoading(false);

@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
 	auth "github.com/DeveloperAromal/ieeesbvast/internal/features/auth"
 	formatter "github.com/DeveloperAromal/ieeesbvast/pkg/formate"
@@ -23,8 +24,23 @@ func NewHandler(service Service, authService auth.Service) *handler {
 
 var response = formatter.NewRepository()
 
+func sessionToken(c *gin.Context) (string, error) {
+	authorization := strings.TrimSpace(c.GetHeader("Authorization"))
+	if len(authorization) > len("Bearer ") && strings.EqualFold(authorization[:len("Bearer ")], "Bearer ") {
+		if token := strings.TrimSpace(authorization[len("Bearer "):]); token != "" {
+			return token, nil
+		}
+	}
+
+	if token, err := c.Cookie("session_token"); err == nil && token != "" {
+		return token, nil
+	}
+
+	return "", errors.New("session token is required")
+}
+
 func (h *handler) userID(c *gin.Context) (string, bool) {
-	token, err := c.Cookie("session_token")
+	token, err := sessionToken(c)
 	if err != nil {
 		response.Error(c.Writer, false, http.StatusUnauthorized, "Authentication required")
 		return "", false

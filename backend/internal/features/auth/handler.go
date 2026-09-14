@@ -23,6 +23,23 @@ func NewHandler(srv Service) *handler {
 
 var response = formatter.NewRepository()
 
+// sessionToken accepts the cookie in normal browsers and a Bearer token for
+// browsers that block cross-site cookies, such as Safari with ITP enabled.
+func sessionToken(c *gin.Context) (string, error) {
+	authorization := strings.TrimSpace(c.GetHeader("Authorization"))
+	if len(authorization) > len("Bearer ") && strings.EqualFold(authorization[:len("Bearer ")], "Bearer ") {
+		if token := strings.TrimSpace(authorization[len("Bearer "):]); token != "" {
+			return token, nil
+		}
+	}
+
+	if token, err := c.Cookie("session_token"); err == nil && token != "" {
+		return token, nil
+	}
+
+	return "", errors.New("session token is required")
+}
+
 func (hdlr *handler) CreateEventUsers(c *gin.Context) {
 
 	eventID := c.Param("eventID")
@@ -94,7 +111,7 @@ func (hdlr *handler) LoginUsers(c *gin.Context) {
 		c.Writer,
 		true,
 		http.StatusOK,
-		nil,
+		gin.H{"session_token": token},
 		"Successfully logged in",
 	)
 }
@@ -115,7 +132,7 @@ func isHTTPSRequest(request *http.Request) bool {
 
 func (hdlr *handler) GetUserDetails(c *gin.Context) {
 
-	token, err := c.Cookie("session_token")
+	token, err := sessionToken(c)
 
 	if err != nil {
 		response.Error(

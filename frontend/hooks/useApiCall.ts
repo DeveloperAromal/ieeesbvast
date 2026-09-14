@@ -16,11 +16,17 @@ export const useApiCall = () => {
       setIsLoading(true);
 
       try {
+        const sessionToken = typeof window === "undefined"
+          ? null
+          : window.sessionStorage.getItem("session_token");
         const response = await axios({
           method,
           url: endpoint,
           data,
           withCredentials: true,
+          headers: sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : undefined,
         });
 
         return {

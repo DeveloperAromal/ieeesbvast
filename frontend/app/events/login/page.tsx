@@ -35,7 +35,9 @@ export default function Login() {
                 }
             )
 
-            if (res.success) {
+            const sessionToken = (res.data as { session_token?: string } | null)?.session_token;
+            if (res.success && sessionToken) {
+                window.sessionStorage.setItem("session_token", sessionToken);
                 const session = await makeApiCall("GET", APIENDPOINT.ME);
                 if (session.success && session.data) {
                     router.replace("/events/dashboard");

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strings"
 
 	formatter "github.com/DeveloperAromal/ieeesbvast/pkg/formate"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,24 @@ func NewHandler(srv Service) *handler {
 }
 
 var response = formatter.NewRepository()
+
+// sessionToken accepts the HttpOnly cookie when the browser stores it and an
+// Authorization header as a fallback for browsers that block cross-site
+// cookies (notably Safari with Intelligent Tracking Prevention enabled).
+func sessionToken(c *gin.Context) (string, error) {
+	authorization := strings.TrimSpace(c.GetHeader("Authorization"))
+	if len(authorization) > len("Bearer ") && strings.EqualFold(authorization[:len("Bearer ")], "Bearer ") {
+		if token := strings.TrimSpace(authorization[len("Bearer "):]); token != "" {
+			return token, nil
+		}
+	}
+
+	if token, err := c.Cookie("session_token"); err == nil && token != "" {
+		return token, nil
+	}
+
+	return "", errors.New("session token is required")
+}
 
 func (hdlr *handler) CreateGame(c *gin.Context) {
 	var gameModel Game
@@ -106,7 +125,7 @@ func (hdlr *handler) ValidateGameAnswer(c *gin.Context) {
 		return
 	}
 
-	token, err := c.Cookie("session_token")
+	token, err := sessionToken(c)
 	if err != nil {
 		response.Error(c.Writer, false, http.StatusUnauthorized, "Session token is required")
 		return
@@ -148,7 +167,7 @@ func (hdlr *handler) RequestHint(c *gin.Context) {
 		response.Error(c.Writer, false, http.StatusBadRequest, "Bad request")
 		return
 	}
-	token, err := c.Cookie("session_token")
+	token, err := sessionToken(c)
 	if err != nil {
 		response.Error(c.Writer, false, http.StatusUnauthorized, "Session token is required")
 		return
@@ -187,7 +206,7 @@ func (hdlr *handler) GetLeaderboard(c *gin.Context) {
 }
 
 func (hdlr *handler) BlackoutGame(c *gin.Context) {
-	token, err := c.Cookie("session_token")
+	token, err := sessionToken(c)
 	if err != nil {
 		response.Error(c.Writer, false, http.StatusUnauthorized, "Session token is required")
 		return
@@ -195,6 +214,14 @@ func (hdlr *handler) BlackoutGame(c *gin.Context) {
 
 	gameData, err := hdlr.srv.GetBlackoutGameData(c.Request.Context(), token)
 	if err != nil {
+		if errors.Is(err, ErrSessionExpired) {
+			response.Error(c.Writer, false, http.StatusUnauthorized, "Session expired or invalid")
+			return
+		}
+		if errors.Is(err, ErrGameNotFound) {
+			response.Error(c.Writer, false, http.StatusNotFound, "Blackout game is unavailable")
+			return
+		}
 		response.Error(c.Writer, false, http.StatusInternalServerError, "Failed to fetch game data"+err.Error())
 		return
 	}

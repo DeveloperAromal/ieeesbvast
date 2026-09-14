@@ -249,10 +249,15 @@ export default function TimerPage() {
                     return;
                 }
 
-                router.replace("/events/login");
+                if (res.status === 401 || res.status === 403) {
+                    window.sessionStorage.removeItem("session_token");
+                    router.replace("/events/login");
+                } else {
+                    setLoading(false);
+                }
             } catch (error) {
                 console.error("Error fetching user:", error);
-                router.replace("/events/login");
+                setLoading(false);
             }
         };
 

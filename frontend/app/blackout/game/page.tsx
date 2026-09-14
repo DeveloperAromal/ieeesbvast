@@ -28,7 +28,17 @@ export default function BlackoutPage() {
 
   const refresh = useCallback(async () => {
     const result = await makeApiCall("GET", APIENDPOINT.BlackoutGame);
-    if (!result.success || !result.data) { router.replace("/blackout/login"); return; }
+    if (!result.success || !result.data) {
+      if (result.status === 401 || result.status === 403) {
+        window.sessionStorage.removeItem("session_token");
+        router.replace("/blackout/login");
+      } else {
+        setNotice(result.message || "Unable to load the game. Please refresh and try again.");
+        setFailed(true);
+        setChecking(false);
+      }
+      return;
+    }
     const data = result.data as Game;
     setGame(data);
     const ranks = await makeApiCall("GET", APIENDPOINT.GetGameLeaderboard(data.game_id));
@@ -62,7 +72,7 @@ export default function BlackoutPage() {
   };
 
   if (checking) return <main className="dark flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">Loading Blackout…</main>;
-  if (!game?.current_chapter) return <main className="dark flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">Blackout is unavailable.</main>;
+  if (!game?.current_chapter) return <main className="dark flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center text-sm text-muted-foreground"><p>{notice || "Blackout is unavailable."}</p><Button variant="outline" onClick={() => void refresh()}>Try again</Button></main>;
 
   const chapter = game.current_chapter;
   const trapped = game.maze_state === "dead_end";
