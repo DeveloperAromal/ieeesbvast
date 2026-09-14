@@ -37,7 +37,7 @@ export default function BlackoutLoginPage() {
       // Session token is set via cookie by the API
       setEmail("");
       setPassword("");
-      router.push("/events/blackout");
+      router.push("/blackout/game");
     } else {
       setError(res.message || "Invalid credentials. Please try again.");
     }

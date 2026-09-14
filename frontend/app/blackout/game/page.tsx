@@ -27,7 +27,7 @@ export default function BlackoutPage() {
 
   const refresh = useCallback(async () => {
     const result = await makeApiCall("GET", APIENDPOINT.BlackoutGame);
-    if (!result.success || !result.data) { router.replace("/events/blackout/login"); return; }
+    if (!result.success || !result.data) { router.replace("/blackout/login"); return; }
     const data = result.data as Game;
     setGame(data);
     const ranks = await makeApiCall("GET", APIENDPOINT.GetGameLeaderboard(data.game_id));
