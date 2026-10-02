@@ -32,23 +32,6 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 	if strings.TrimSpace(registration.EventID) == "" {
 		return registration, ErrInvalidEventID
 	}
-	if registration.TeamSize == 0 {
-		registration.TeamSize = 1
-	}
-	if registration.TeamSize < 1 || registration.TeamSize > 4 {
-		return registration, ErrInvalidTeamSize
-	}
-	if strings.TrimSpace(registration.TeamName) == "" {
-		return registration, ErrTeamNameRequired
-	}
-	if len(registration.TeamMembers) != registration.TeamSize-1 {
-		return registration, ErrInvalidTeamMembers
-	}
-	for _, member := range registration.TeamMembers {
-		if member.Name == "" || member.Email == "" {
-			return registration, ErrInvalidTeamMembers
-		}
-	}
 
 	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -77,7 +60,7 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 		return registration, ErrRegistrationClosed
 	}
 
-	// Insert registration first and get the ID
+	// Insert individual registration and get the ID.
 	insertQuery := `
 		INSERT INTO registrations
 			(
@@ -88,11 +71,9 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 				email,
 				collage_name,
 				semester,
-				branch,
-				team_name,
-				team_size
+				branch
 			)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 	`
 
@@ -107,24 +88,9 @@ func (repo *repository) CreateRegistration(ctx context.Context, registration Reg
 		registration.CollageName,
 		registration.Semester,
 		registration.Branch,
-		registration.TeamName,
-		registration.TeamSize,
 	).Scan(&registration.ID)
 	if err != nil {
 		return registration, err
-	}
-
-	// Now insert team members with the correct registration ID
-	for i := range registration.TeamMembers {
-		member := &registration.TeamMembers[i]
-		err = tx.QueryRowContext(ctx, `
-			INSERT INTO registration_team_members (registration_id, name, email)
-			VALUES ($1, $2, $3)
-			RETURNING id`, registration.ID, member.Name, member.Email).Scan(&member.ID)
-		if err != nil {
-			return registration, err
-		}
-		member.RegistrationID = registration.ID
 	}
 
 	if err := tx.Commit(); err != nil {

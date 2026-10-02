@@ -35,9 +35,6 @@ export default function RegisterPage() {
         semester: "",
         branch: "",
         event_id: id ?? "",
-        team_name: "",
-        team_size: 1,
-        team_members: [],
     });
 
     const validateForm = (): boolean => {
