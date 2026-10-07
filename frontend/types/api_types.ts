@@ -17,8 +17,3 @@ export interface RegistrationPayload {
     branch: string;
     event_id: string;
 }
-
-export interface TeamMemberPayload {
-    name: string;
-    email: string;
-}

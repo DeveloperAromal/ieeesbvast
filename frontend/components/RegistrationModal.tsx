@@ -42,9 +42,6 @@ export function RegistrationModal({
         semester: "",
         branch: "",
         event_id: eventId,
-        team_name: "",
-        team_size: 1,
-        team_members: [],
     });
 
     const validateForm = (): boolean => {
@@ -73,9 +70,6 @@ export function RegistrationModal({
         if (!formData.branch.trim()) {
             errors.push({ field: "branch", message: "Branch is required" });
         }
-        if (!formData.team_name.trim()) {
-            errors.push({ field: "team_name", message: "Team name is required" });
-        }
 
         setFormErrors(errors);
         return errors.length === 0;
@@ -85,7 +79,7 @@ export function RegistrationModal({
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === "team_size" ? parseInt(value) : value
+            [name]: value
         }));
         setFormErrors(prev => prev.filter(err => err.field !== name));
     };
@@ -122,9 +116,6 @@ export function RegistrationModal({
                     semester: "",
                     branch: "",
                     event_id: eventId,
-                    team_name: "",
-                    team_size: 1,
-                    team_members: [],
                 });
                 setTimeout(() => {
                     onClose();
@@ -364,47 +355,6 @@ export function RegistrationModal({
                                 </p>
                             )}
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2"
-                            style={{ color: "var(--text-secondary)" }}>
-                            Team Name <span style={{ color: "var(--color-accent)" }}>*</span>
-                        </label>
-                        <input
-                            type="text"
-                            name="team_name"
-                            value={formData.team_name}
-                            onChange={handleInputChange}
-                            placeholder="Your Team Name"
-                            className="input w-full"
-                            style={{
-                                borderColor: formErrors.some(e => e.field === "team_name") ? "var(--danger-border)" : "var(--border-default)"
-                            }}
-                        />
-                        {formErrors.find(e => e.field === "team_name") && (
-                            <p className="mt-1 text-xs" style={{ color: "var(--danger-text)" }}>
-                                {formErrors.find(e => e.field === "team_name")?.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2"
-                            style={{ color: "var(--text-secondary)" }}>
-                            Team Size <span style={{ color: "var(--color-accent)" }}>*</span>
-                        </label>
-                        <select
-                            name="team_size"
-                            value={formData.team_size}
-                            onChange={handleInputChange}
-                            className="input w-full"
-                        >
-                            <option value={1}>1 (Solo)</option>
-                            <option value={2}>2</option>
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                        </select>
                     </div>
 
                     <div className="flex gap-3 pt-4">
