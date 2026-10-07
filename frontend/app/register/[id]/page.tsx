@@ -6,7 +6,7 @@ import { AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { RegistrationPayload, TeamMemberPayload } from "@/types/api_types";
+import type { RegistrationPayload } from "@/types/api_types";
 
 interface FormError {
     field: string;
