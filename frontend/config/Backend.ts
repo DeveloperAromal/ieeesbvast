@@ -5,6 +5,8 @@ const baseUrl = isProduction
   ? process.env.NEXT_PUBLIC_API_URL
   : "http://localhost:8080";
 
+export const BASE_URL = baseUrl;
+
 export const APIENDPOINT = {
   Root: `${baseUrl}/`,
   Health: `${baseUrl}/health`,
@@ -39,6 +41,14 @@ export const APIENDPOINT = {
   CreateRegistration: `${baseUrl}/api/v1/registrations`,
   GetRegistrationsByEventId: (eventId: string) =>
     `${baseUrl}/api/v1/registrations/${eventId}`,
+
+  CreateRSVP: `${baseUrl}/api/v1/rsvps`,
+  GetRSVPsByEventId: (eventId: string) =>
+    `${baseUrl}/api/v1/rsvps/${eventId}`,
+  GetRSVPById: (id: string) =>
+    `${baseUrl}/api/v1/rsvps/by-id/${id}`,
+  DeleteRSVP: (id: string) =>
+    `${baseUrl}/api/v1/rsvps/${id}`,
 
   GetGameByID: (gameId: string) => `${baseUrl}/api/v1/game/${gameId}`,
   SubmitGameAnswer: `${baseUrl}/api/v1/game/answer`,
